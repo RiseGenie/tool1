@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chandan Mitra — Product &amp; Marketing OS Leader</title>
 <meta name="description" content="Chandan Mitra — Senior Director, Product Management. Marketing OS &amp; Lead Generation Suite leader, GoHighLevel expert, founder of RiseGenie." />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%23c9a24b%22>C</text></svg>" />
+<meta name="theme-color" content="#f4f9ff" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%232f6fed%22>C</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,26 +39,43 @@
   <!-- HERO -->
   <section class="hero">
     <div class="hero-bg" aria-hidden="true">
+      <canvas id="particleCanvas"></canvas>
       <div class="hero-grid"></div>
       <div class="hero-glow glow-1"></div>
       <div class="hero-glow glow-2"></div>
     </div>
-    <div class="container hero-inner">
-      <p class="eyebrow reveal">Senior Director, Product Management</p>
-      <h1 class="hero-title reveal">
-        Chandan Mitra
-      </h1>
-      <p class="hero-sub reveal">
-        I build and scale <strong>Marketing OS &amp; Lead Generation</strong> products —
-        turning SaaS platforms into revenue engines for coaches, agencies and SMBs.
-      </p>
-      <p class="hero-meta reveal">
-        Kolkata, India &nbsp;·&nbsp; 10+ years in Product &amp; MarTech &nbsp;·&nbsp; India's first Certified GoHighLevel Admin
-      </p>
-      <div class="hero-actions reveal">
-        <a href="#contact" class="btn btn-primary">Let's talk</a>
-        <a href="#experience" class="btn btn-ghost">View experience</a>
-        <a href="https://linkedin.com/in/chandan-mitra" target="_blank" rel="noopener" class="btn btn-ghost">LinkedIn ↗</a>
+    <div class="container hero-layout">
+      <div class="hero-inner">
+        <p class="eyebrow reveal">Senior Director, Product Management</p>
+        <h1 class="hero-title reveal">
+          Chandan Mitra
+        </h1>
+        <p class="hero-sub reveal">
+          I build and scale <strong>Marketing OS &amp; Lead Generation</strong> products —
+          turning SaaS platforms into revenue engines for coaches, agencies and SMBs.
+        </p>
+        <p class="hero-meta reveal">
+          Kolkata, India &nbsp;·&nbsp; 10+ years in Product &amp; MarTech &nbsp;·&nbsp; India's first Certified GoHighLevel Admin
+        </p>
+        <div class="hero-actions reveal">
+          <a href="#contact" class="btn btn-primary">Let's talk</a>
+          <a href="#experience" class="btn btn-ghost">View experience</a>
+          <a href="https://linkedin.com/in/chandan-mitra" target="_blank" rel="noopener" class="btn btn-ghost">LinkedIn ↗</a>
+        </div>
+      </div>
+
+      <div class="hero-figure reveal" aria-hidden="true">
+        <div class="tilt-scene" id="tiltScene">
+          <div class="tilt-card face-front">
+            <span class="tilt-mono">CM</span>
+            <span class="tilt-role">Product<br>&amp; Marketing OS</span>
+          </div>
+          <div class="tilt-orbit orbit-1"><span>Funnel Boss</span></div>
+          <div class="tilt-orbit orbit-2"><span>GoHighLevel</span></div>
+          <div class="tilt-orbit orbit-3"><span>RiseGenie</span></div>
+          <div class="tilt-ring ring-1"></div>
+          <div class="tilt-ring ring-2"></div>
+        </div>
       </div>
     </div>
     <div class="hero-stats container reveal">
@@ -94,7 +112,7 @@
           natively on the HighLevel platform, spanning funnels, forms, calendars, email marketing, SEO,
           paid social and CRM automation.
         </p>
-        <div class="about-side reveal">
+        <div class="about-side reveal" data-tilt data-tilt-max="6">
           <ul class="about-facts">
             <li><span>🎓</span> MBA Gold Medalist — Adamas University</li>
             <li><span>🏆</span> India's first Certified GoHighLevel Admin</li>
@@ -291,7 +309,7 @@
       <p class="section-sub reveal">Selected products, ventures, and programs I've founded, launched, or led to measurable growth.</p>
 
       <div class="work-grid">
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">SaaS Product</span>
           </div>
@@ -303,7 +321,7 @@
           </ul>
         </article>
 
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">Product Suite</span>
           </div>
@@ -315,7 +333,7 @@
           </ul>
         </article>
 
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">Agency</span>
           </div>
@@ -327,7 +345,7 @@
           </ul>
         </article>
 
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">Education</span>
           </div>
@@ -339,7 +357,7 @@
           </ul>
         </article>
 
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">Growth Engine</span>
           </div>
@@ -351,7 +369,7 @@
           </ul>
         </article>
 
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-tilt>
           <div class="work-card-top">
             <span class="work-tag">Corporate Training</span>
           </div>
@@ -373,31 +391,31 @@
       <h2 class="section-title reveal">Core skills &amp; expertise</h2>
 
       <div class="skills-grid">
-        <div class="skill-card reveal">
+        <div class="skill-card reveal" data-tilt data-tilt-max="5">
           <h3>Product Leadership</h3>
           <div class="chips">
             <span>Product Strategy &amp; Roadmap</span><span>Product Management</span><span>Go-to-Market (GTM) Strategy</span><span>Multi-Product Portfolio Ownership</span><span>Cross-Functional Leadership</span><span>Stakeholder Management</span><span>Team Leadership &amp; Mentoring</span><span>Program Management</span>
           </div>
         </div>
-        <div class="skill-card reveal">
+        <div class="skill-card reveal" data-tilt data-tilt-max="5">
           <h3>Marketing OS &amp; Lead Generation</h3>
           <div class="chips">
             <span>Funnels &amp; Websites</span><span>Landing Pages</span><span>Lead Generation</span><span>CRO</span><span>Forms &amp; Surveys</span><span>Calendar &amp; Booking</span><span>Marketing Automation</span><span>CRM Automation</span><span>Email Marketing</span><span>SEO</span><span>Paid Social &amp; Digital Ads</span><span>Reputation Management</span><span>Domains &amp; DNS</span>
           </div>
         </div>
-        <div class="skill-card reveal">
+        <div class="skill-card reveal" data-tilt data-tilt-max="5">
           <h3>Platform Expertise</h3>
           <div class="chips">
             <span>GoHighLevel Administration</span><span>Workflow Automation</span><span>Zapier</span><span>Pabbly</span><span>Albato</span><span>Learning Management Systems</span>
           </div>
         </div>
-        <div class="skill-card reveal">
+        <div class="skill-card reveal" data-tilt data-tilt-max="5">
           <h3>Data, Analytics &amp; AI</h3>
           <div class="chips">
             <span>Analytics &amp; Reporting</span><span>KPI Tracking</span><span>Marketing Analytics</span><span>AI-Driven Workflows</span><span>Generative AI Fundamentals</span>
           </div>
         </div>
-        <div class="skill-card reveal">
+        <div class="skill-card reveal" data-tilt data-tilt-max="5">
           <h3>Growth &amp; Revenue</h3>
           <div class="chips">
             <span>SaaS Growth</span><span>Customer Acquisition</span><span>Customer Success &amp; Retention</span><span>Revenue Growth</span><span>Agency &amp; SMB Growth Strategy</span><span>Sales Enablement</span>
@@ -445,33 +463,155 @@
     <div class="container">
       <p class="section-kicker reveal">06 · Credentials</p>
       <h2 class="section-title reveal">Certifications &amp; awards</h2>
+      <p class="section-sub reveal">Formal training and recognitions that back the platform expertise and product results above.</p>
 
-      <div class="cred-columns">
-        <div class="cred-col reveal">
-          <h3>Certifications</h3>
-          <ul class="cred-list">
-            <li><strong>HighLevel Certified Admin</strong> — HighLevel <span class="cred-note">(India's first Certified GoHighLevel Admins)</span></li>
-            <li><strong>Introduction to Generative AI</strong> — Google Cloud</li>
-            <li><strong>Google AI Essentials</strong> — Google</li>
-            <li><strong>Project Management Fundamentals</strong> — Microsoft</li>
-            <li><strong>Post-Graduate Certification in Digital Marketing &amp; Communication</strong> — MICA / upGrad</li>
-            <li><strong>Marketing Analytics Specialization</strong> — upGrad</li>
-            <li><strong>Fundamentals of Digital Marketing</strong> — Google</li>
-            <li><strong>Growing Business with Facebook</strong> — Meta</li>
-            <li><strong>Customer Understanding &amp; Digital Marketing Channels</strong> — Unilever</li>
-            <li><strong>Advanced Integrations Certification</strong> — Albato</li>
-            <li><strong>Discover Your First Automation &amp; Enhancing Your Zaps</strong> — Zapier</li>
-            <li><strong>ICDE 2019 Certificate of Presentation &amp; Participation</strong> — IIM Raipur</li>
-            <li><strong>Student Exchange Program, MBA</strong> — Kyiv National Economic University</li>
-          </ul>
+      <h3 class="cred-subhead reveal">Certifications</h3>
+      <div class="cred-grid">
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🥇</span>
+            <span class="cred-issuer">HighLevel</span>
+          </div>
+          <h4>HighLevel Certified Admin</h4>
+          <p>One of India's first Certified GoHighLevel Admins — validated hands-on mastery of the platform's funnels, CRM, automation and messaging surface.</p>
         </div>
-        <div class="cred-col reveal">
-          <h3>Awards</h3>
-          <ul class="cred-list">
-            <li><strong>Tata Memorial Gold Medal &amp; Silver Medal</strong> — Adamas University (08/2017) <span class="cred-note">MBA Gold Medalist</span></li>
-            <li><strong>Best Startup Award</strong> — MGC'19 <span class="cred-note">Contribution to Vawsum's win</span></li>
-            <li><strong>Featured at the Innovation Showcase</strong> — Office of the Principal Scientific Advisor to the Government of India</li>
-          </ul>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🤖</span>
+            <span class="cred-issuer">Google Cloud</span>
+          </div>
+          <h4>Introduction to Generative AI</h4>
+          <p>Foundational training on generative AI concepts, model behavior, and responsible use in enterprise workflows.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">✨</span>
+            <span class="cred-issuer">Google</span>
+          </div>
+          <h4>Google AI Essentials</h4>
+          <p>Applied AI skills for everyday productivity — prompting, evaluating outputs, and integrating AI into decision-making.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🧭</span>
+            <span class="cred-issuer">Microsoft</span>
+          </div>
+          <h4>Project Management Fundamentals</h4>
+          <p>Core principles of project planning, scoping, execution, and stakeholder communication.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">📣</span>
+            <span class="cred-issuer">MICA / upGrad</span>
+          </div>
+          <h4>PG Certification, Digital Marketing &amp; Communication</h4>
+          <p>Advanced coursework in strategic marketing communication, media planning, and integrated digital channel strategy. Scored 90.12%.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">📊</span>
+            <span class="cred-issuer">upGrad</span>
+          </div>
+          <h4>Marketing Analytics Specialization</h4>
+          <p>Applied training in data-driven marketing measurement, attribution modeling, and KPI frameworks for growth decisions.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🔍</span>
+            <span class="cred-issuer">Google</span>
+          </div>
+          <h4>Fundamentals of Digital Marketing</h4>
+          <p>Google's official primer covering search, social, and online marketing best practices across the funnel.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">📱</span>
+            <span class="cred-issuer">Meta</span>
+          </div>
+          <h4>Growing Business with Facebook</h4>
+          <p>Meta-certified training on building and scaling business growth through Facebook's ad and audience tools.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🧠</span>
+            <span class="cred-issuer">Unilever</span>
+          </div>
+          <h4>Customer Understanding &amp; Digital Marketing Channels</h4>
+          <p>Enterprise-led training on customer insight and channel strategy from a global FMCG leader.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🔗</span>
+            <span class="cred-issuer">Albato</span>
+          </div>
+          <h4>Advanced Integrations Certification</h4>
+          <p>Advanced no-code integration and workflow automation across marketing and CRM stacks.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">⚡</span>
+            <span class="cred-issuer">Zapier</span>
+          </div>
+          <h4>Discover Your First Automation &amp; Enhancing Your Zaps</h4>
+          <p>Hands-on certification in building and optimizing multi-step automation workflows.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🔬</span>
+            <span class="cred-issuer">IIM Raipur</span>
+          </div>
+          <h4>ICDE 2019 Certificate of Presentation &amp; Participation</h4>
+          <p>Recognized for presenting original research at the International Conference on Digital Economy.</p>
+        </div>
+
+        <div class="cred-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🌍</span>
+            <span class="cred-issuer">Kyiv National Economic University</span>
+          </div>
+          <h4>Student Exchange Program, MBA</h4>
+          <p>International academic exchange focused on global business administration practices.</p>
+        </div>
+      </div>
+
+      <h3 class="cred-subhead reveal">Awards</h3>
+      <div class="cred-grid awards-grid">
+        <div class="cred-card award-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🥇</span>
+            <span class="cred-issuer">Adamas University · Aug 2017</span>
+          </div>
+          <h4>Tata Memorial Gold Medal &amp; Silver Medal</h4>
+          <p>Graduated top of the MBA cohort — awarded for outstanding academic performance and a consistent 8.9 CGPA across the program.</p>
+        </div>
+
+        <div class="cred-card award-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🚀</span>
+            <span class="cred-issuer">MGC'19</span>
+          </div>
+          <h4>Best Startup Award</h4>
+          <p>Contributed to Vawsum Schools' recognition as a top emerging startup at the Merchant Chamber of Commerce's flagship startup event.</p>
+        </div>
+
+        <div class="cred-card award-card reveal" data-tilt data-tilt-max="4">
+          <div class="cred-card-top">
+            <span class="cred-icon">🏛️</span>
+            <span class="cred-issuer">Govt. of India</span>
+          </div>
+          <h4>Featured at the Innovation Showcase</h4>
+          <p>Selected to showcase product and entrepreneurial work at a national innovation platform hosted by the Office of the Principal Scientific Advisor to the Government of India.</p>
         </div>
       </div>
     </div>
