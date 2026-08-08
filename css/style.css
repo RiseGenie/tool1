@@ -459,37 +459,81 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* ---------- About ---------- */
 .about-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 3rem;
   align-items: start;
   margin-top: 1rem;
 }
+.about-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
 .about-lead {
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   color: var(--text-dim);
-  max-width: 68ch;
+  max-width: 62ch;
+  margin: 0;
 }
 .about-lead strong { color: var(--text); }
-.about-side {
-  background: var(--bg-soft);
+.about-card {
+  background: #fff;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   padding: 1.6rem;
+  box-shadow: var(--shadow-sm);
   transform-style: preserve-3d;
-  transition: transform 0.15s ease-out, box-shadow 0.25s ease;
+  transition: transform 0.15s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
 }
-.about-side:hover { box-shadow: var(--shadow-md); }
+.about-card:hover { box-shadow: var(--shadow-md); border-color: rgba(47, 111, 237, 0.3); }
+.about-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 1.1rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+.about-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+.about-card-name {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+.about-card-role {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  margin-top: 0.15rem;
+}
 .about-facts li {
   display: flex;
-  gap: 0.7rem;
+  gap: 0.8rem;
   align-items: flex-start;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid var(--panel-border);
-  font-size: 0.95rem;
+  padding: 0.7rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
   color: var(--text-dim);
 }
-.about-facts li:last-child { border-bottom: none; }
-.about-facts span:first-child { flex-shrink: 0; }
+.about-facts li:not(:last-child) { border-bottom: 1px solid var(--panel-border); }
+.about-fact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--accent-light);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
 
 /* ---------- Timeline ---------- */
 .timeline {
