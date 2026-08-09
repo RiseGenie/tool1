@@ -85,10 +85,11 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .brand {
   font-family: var(--serif);
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--text);
+  white-space: nowrap;
 }
 .brand-dot { color: var(--accent); }
 
@@ -368,18 +369,52 @@ ul { margin: 0; padding: 0; list-style: none; }
 .hero-stats {
   position: relative;
   z-index: 1;
-  margin-top: 4.5rem;
+  margin-top: 4rem;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  border-top: 1px solid var(--panel-border);
-  padding-top: 2.2rem;
+  gap: 1.1rem;
 }
 .stat {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.6rem;
+  padding: 1.4rem 1.3rem 1.5rem;
+  background: linear-gradient(160deg, #fff 0%, var(--accent-light) 160%);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 0.2s var(--ease), box-shadow 0.25s ease, border-color 0.25s ease;
 }
+.stat::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  right: -20%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47, 111, 237, 0.14) 0%, transparent 72%);
+  pointer-events: none;
+}
+.stat:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(47, 111, 237, 0.35);
+}
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.stat-icon svg { width: 17px; height: 17px; }
 .stat-figure {
   display: flex;
   align-items: baseline;
@@ -387,15 +422,15 @@ ul { margin: 0; padding: 0; list-style: none; }
 .stat-num,
 .stat-suffix {
   font-family: var(--serif);
-  font-size: 2.3rem;
+  font-size: 2.15rem;
   font-weight: 600;
   color: var(--accent);
 }
 .stat-label {
   display: block;
   font-size: 0.82rem;
-  color: var(--text-faint);
-  margin-top: 0.35rem;
+  color: var(--text-dim);
+  font-weight: 500;
   max-width: 20ch;
 }
 
@@ -531,9 +566,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   height: 32px;
   border-radius: 9px;
   background: var(--accent-light);
-  font-size: 0.95rem;
+  color: var(--accent);
   flex-shrink: 0;
 }
+.about-fact-icon svg { width: 16px; height: 16px; }
 
 /* ---------- Timeline ---------- */
 .timeline {
@@ -696,8 +732,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  color: var(--accent);
 }
+.portfolio-icon svg { width: 24px; height: 24px; }
 .portfolio-card h3 {
   font-family: var(--serif);
   font-size: 1.15rem;
@@ -768,8 +805,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.2rem;
+  color: var(--accent);
 }
+.sample-thumb svg { width: 20%; height: 20%; }
 .sample-status {
   align-self: flex-start;
   font-size: 0.7rem;
@@ -923,9 +961,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   height: 38px;
   border-radius: 10px;
   background: var(--accent-light);
-  font-size: 1.15rem;
+  color: var(--accent);
   flex-shrink: 0;
 }
+.cred-icon svg { width: 18px; height: 18px; }
 .cred-issuer {
   font-size: 0.76rem;
   font-weight: 700;
