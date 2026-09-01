@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Comment Copilot — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Comment Copilot for LinkedIn</h1>
+      <p class="subtitle">Settings are stored only in your browser and are sent only to Anthropic's API when you click "Draft comment."</p>
+    </header>
+
+    <section class="card">
+      <h2>Claude API key</h2>
+      <p class="hint">
+        Comment Copilot uses your own Anthropic API key — there's no shared backend.
+        Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+      </p>
+      <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
+      <div class="row">
+        <button id="toggle-key" class="ghost" type="button">Show</button>
+        <span class="status" id="key-status"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Model</h2>
+      <p class="hint">Sonnet is fast and inexpensive for short comment drafts. Switch to Opus if you want more nuanced drafts and don't mind the extra cost.</p>
+      <select id="model">
+        <option value="claude-haiku-4-5">Claude Haiku 4.5 — fastest, cheapest</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5 — recommended</option>
+        <option value="claude-opus-5">Claude Opus 5 — most capable</option>
+      </select>
+    </section>
+
+    <section class="card">
+      <h2>About you (optional)</h2>
+      <p class="hint">A short bio so drafts sound like you, not a generic commenter. It's included in every request as context — never claimed as a quote from you.</p>
+      <textarea id="persona" rows="3" placeholder="e.g. B2B marketing director at a mid-size SaaS company, mostly comment on growth and GTM posts."></textarea>
+    </section>
+
+    <button id="save" class="primary">Save settings</button>
+    <p class="saved" id="saved-hint"></p>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

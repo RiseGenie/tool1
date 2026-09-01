@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Comment Copilot for LinkedIn",
+  "version": "1.0.0",
+  "description": "Reads the LinkedIn post you're viewing, lets you pick a tone, and drafts a comment into the comment box for you to review and post yourself. Uses your own Claude API key — nothing is ever posted automatically.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.anthropic.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Comment Copilot for LinkedIn",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["shared-tones.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
