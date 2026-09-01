@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ColorSnap</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>ColorSnap</h1>
+    <span class="subtitle">Screen color picker</span>
+  </header>
+
+  <main>
+    <div class="preview" id="preview">
+      <div class="swatch" id="swatch"></div>
+      <div class="values">
+        <div class="value-row">
+          <label>HEX</label>
+          <input type="text" id="hex" readonly />
+          <button class="copy" data-copy="hex" title="Copy HEX">Copy</button>
+        </div>
+        <div class="value-row">
+          <label>RGB</label>
+          <input type="text" id="rgb" readonly />
+          <button class="copy" data-copy="rgb" title="Copy RGB">Copy</button>
+        </div>
+        <div class="value-row">
+          <label>HSL</label>
+          <input type="text" id="hsl" readonly />
+          <button class="copy" data-copy="hsl" title="Copy HSL">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="pick" class="primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.7 4.3a3 3 0 0 0-4.2 0l-2 2-1.4-1.4-1.4 1.4 1.4 1.4-9.6 9.6a2 2 0 0 0-.5.9L2 22l3.8-1a2 2 0 0 0 .9-.5l9.6-9.6 1.4 1.4 1.4-1.4-1.4-1.4 2-2a3 3 0 0 0 0-4.2Z" fill="currentColor"/>
+      </svg>
+      Pick a color
+    </button>
+    <p class="hint" id="hint">Click, then select any pixel on the page.</p>
+
+    <section class="history">
+      <div class="history-head">
+        <h2>History</h2>
+        <button id="clear" class="link">Clear</button>
+      </div>
+      <div id="history-grid" class="history-grid"></div>
+      <p class="empty" id="empty-hint">No colors picked yet.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>Shortcut: <kbd id="shortcut">Ctrl+Shift+U</kbd></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
