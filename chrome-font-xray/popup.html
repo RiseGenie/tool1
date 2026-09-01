@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Font X-Ray</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Font X-Ray</h1>
+    <span class="subtitle">Type system inspector</span>
+  </header>
+
+  <main>
+    <div class="actions">
+      <button id="inspect" class="primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5Z" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+        Hover to inspect
+      </button>
+      <button id="scan" class="secondary">Scan whole page</button>
+    </div>
+    <p class="hint" id="hint">Hover mode opens an on-page panel — click any text to pin it.</p>
+
+    <section class="report">
+      <div class="report-head">
+        <h2 id="report-title">Type system</h2>
+        <div class="report-actions">
+          <button id="copy-css" class="link">Copy CSS</button>
+          <button id="copy-json" class="link">Copy JSON</button>
+          <button id="clear" class="link">Clear</button>
+        </div>
+      </div>
+      <div id="list" class="list"></div>
+      <p class="empty" id="empty-hint">No styles collected yet.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>Shortcut: <kbd id="shortcut">Ctrl+Shift+F</kbd></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
