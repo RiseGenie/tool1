@@ -28,11 +28,13 @@ saveBtn.addEventListener('click', async () => {
   setTimeout(() => { savedHint.textContent = ''; }, 1800);
 });
 
+const DEFAULT_NICHE = ['GoHighLevel', 'GHL', 'digital marketing', 'business automation', 'workflows', 'marketing automation', 'AI', 'AI agent', 'strategy'];
+
 (async function init() {
-  const { apiKey = '', model = 'claude-sonnet-5', persona = '', niche = [] } = await chrome.storage.local.get(['apiKey', 'model', 'persona', 'niche']);
+  const { apiKey = '', model = 'claude-sonnet-5', persona = '', niche } = await chrome.storage.local.get(['apiKey', 'model', 'persona', 'niche']);
   apiKeyInput.value = apiKey;
   modelSelect.value = model;
   personaInput.value = persona;
-  nicheInput.value = niche.join(', ');
+  nicheInput.value = (niche === undefined ? DEFAULT_NICHE : niche).join(', ');
   keyStatus.textContent = apiKey ? 'Key saved.' : 'No key set yet.';
 })();
