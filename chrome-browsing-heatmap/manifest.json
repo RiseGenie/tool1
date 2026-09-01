@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Browsing Heatmap Mirror",
+  "version": "1.0.0",
+  "description": "A private, local-only GitHub-style contribution graph of the time you spend per website. No account, no server, no data ever leaves your browser.",
+  "permissions": ["storage", "idle", "alarms", "tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Browsing Heatmap Mirror",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
