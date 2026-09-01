@@ -28,8 +28,22 @@ person on their own account, not run unattended across many accounts.
 - **Bring your own Claude API key** — stored only in `chrome.storage.local`
   on your machine, sent only to `api.anthropic.com`, never to any
   third-party server. Model is configurable (Haiku 4.5 / Sonnet 5 / Opus 5).
-- **Never auto-submits.** The draft lands in the comment box; you edit and
-  click LinkedIn's own Comment button.
+- **No em dashes.** Drafts are prompted to never use "—"/"–", with a
+  post-processing pass that strips any that slip through, since they're
+  one of the most common AI writing tells.
+- **Niche highlighting.** Set a few topic keywords in Settings and matching
+  posts get a small "In your niche" badge as they show up in your own
+  feed, so you're not scrolling past the ones worth commenting on. This
+  only looks at posts already rendered on the page as you browse normally,
+  it never searches, scrapes, or fetches anything on its own.
+- **Never auto-submits, never auto-likes.** The draft lands in the comment
+  box; you edit and click LinkedIn's own Comment button. This extension
+  intentionally does not do fully unattended engagement (scheduled or
+  background auto-liking/auto-commenting on "trending" posts) — LinkedIn's
+  User Agreement prohibits automated engagement, and accounts running that
+  kind of automation get rate-limited, restricted, or banned. The niche
+  badge gets you to the right posts faster; a human still reads the post
+  and clicks the button.
 
 ## Installing (unpacked, for development)
 
@@ -86,9 +100,9 @@ icons/                Generated PNG icons (16/32/48/128)
 
 | Permission | Why |
 |---|---|
-| `storage` | Persist your API key, model choice, persona, and last-used tone locally. |
+| `storage` | Persist your API key, model choice, persona, niche keywords, and last-used tone locally. |
 | `host_permissions: api.anthropic.com` | Call the Claude API directly from the extension. |
-| Content script on `linkedin.com` | Inject the in-page toolbar and read the post you're viewing. |
+| Content script on `linkedin.com` | Inject the in-page toolbar, badge matching posts, and read the post you're viewing. |
 
 ## Limitations & privacy notes
 

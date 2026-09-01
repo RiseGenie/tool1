@@ -67,3 +67,16 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+.ccp-niche-badge {
+  display: inline-block;
+  margin: 6px 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fdf0e6, #f7e6fb);
+  border: 1px solid #ecd9c6;
+  color: #92400e;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}

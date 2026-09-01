@@ -3,6 +3,7 @@ const toggleKeyBtn = document.getElementById('toggle-key');
 const keyStatus = document.getElementById('key-status');
 const modelSelect = document.getElementById('model');
 const personaInput = document.getElementById('persona');
+const nicheInput = document.getElementById('niche');
 const saveBtn = document.getElementById('save');
 const savedHint = document.getElementById('saved-hint');
 
@@ -13,19 +14,25 @@ toggleKeyBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', async () => {
+  const niche = nicheInput.value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   await chrome.storage.local.set({
     apiKey: apiKeyInput.value.trim(),
     model: modelSelect.value,
     persona: personaInput.value.trim(),
+    niche,
   });
   savedHint.textContent = 'Saved.';
   setTimeout(() => { savedHint.textContent = ''; }, 1800);
 });
 
 (async function init() {
-  const { apiKey = '', model = 'claude-sonnet-5', persona = '' } = await chrome.storage.local.get(['apiKey', 'model', 'persona']);
+  const { apiKey = '', model = 'claude-sonnet-5', persona = '', niche = [] } = await chrome.storage.local.get(['apiKey', 'model', 'persona', 'niche']);
   apiKeyInput.value = apiKey;
   modelSelect.value = model;
   personaInput.value = persona;
+  nicheInput.value = niche.join(', ');
   keyStatus.textContent = apiKey ? 'Key saved.' : 'No key set yet.';
 })();

@@ -1,12 +1,26 @@
 (function () {
   const processed = new WeakSet();
+  let nicheProcessed = new WeakSet();
+  let nicheKeywords = [];
   let scanTimer = null;
+
+  chrome.storage.local.get('niche').then(({ niche = [] }) => {
+    nicheKeywords = niche;
+    scheduleScan();
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.niche) return;
+    nicheKeywords = changes.niche.newValue || [];
+    nicheProcessed = new WeakSet(); // let already-seen posts be re-checked
+    scheduleScan();
+  });
 
   function scheduleScan() {
     if (scanTimer) return;
     scanTimer = setTimeout(() => {
       scanTimer = null;
       scanForCommentBoxes();
+      scanForNichePosts();
     }, 300);
   }
 
@@ -27,6 +41,40 @@
       processed.add(editor);
       injectToolbar(editor);
     }
+  }
+
+  function findTopLevelPosts() {
+    const candidates = document.querySelectorAll('div[data-urn], article, div.feed-shared-update-v2');
+    const posts = [];
+    for (const node of candidates) {
+      // Comments (and replies) can carry their own data-urn / article markup
+      // too. Only keep containers that aren't themselves inside a comment.
+      if (node.closest('[class*="comment" i]')) continue;
+      // Keep only the outermost match so a post isn't badged twice via
+      // nested selector hits.
+      const parentMatch = node.parentElement?.closest('div[data-urn], article, div.feed-shared-update-v2');
+      if (parentMatch) continue;
+      posts.push(node);
+    }
+    return posts;
+  }
+
+  function scanForNichePosts() {
+    if (!nicheKeywords.length) return;
+    for (const post of findTopLevelPosts()) {
+      if (nicheProcessed.has(post)) continue;
+      nicheProcessed.add(post);
+
+      const text = extractPostText(post).toLowerCase();
+      const match = nicheKeywords.find((k) => k && text.includes(k.toLowerCase()));
+      if (match) addNicheBadge(post, match);
+    }
+  }
+
+  function addNicheBadge(post, keyword) {
+    const badge = el('div', 'ccp-niche-badge');
+    badge.textContent = `🔥 In your niche (${keyword})`;
+    post.insertBefore(badge, post.firstChild);
   }
 
   function isVisible(el) {
