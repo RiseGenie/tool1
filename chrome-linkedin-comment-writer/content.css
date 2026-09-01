@@ -1,0 +1,82 @@
+.ccp-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 1px solid #e6e6ea;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f7f6fd, #f2effc);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.ccp-select {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #d9d7ea;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.ccp-custom {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #d9d7ea;
+  background: #fff;
+  color: #1a1a1a;
+  min-width: 160px;
+  flex: 1;
+}
+
+.ccp-button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #6b46d6;
+  color: #fff;
+  cursor: pointer;
+}
+
+.ccp-button:hover {
+  background: #5936b8;
+}
+
+.ccp-button:disabled {
+  background: #b6a8e8;
+  cursor: default;
+}
+
+.ccp-status {
+  font-size: 11px;
+  color: #6b6b76;
+  flex-basis: 100%;
+}
+
+.ccp-status-error {
+  color: #c0392b;
+}
+
+.ccp-link {
+  color: #6b46d6;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ccp-niche-badge {
+  display: inline-block;
+  margin: 6px 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fdf0e6, #f7e6fb);
+  border: 1px solid #ecd9c6;
+  color: #92400e;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
