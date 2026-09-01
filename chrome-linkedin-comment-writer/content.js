@@ -11,6 +11,9 @@
   }
 
   function isCommentEditor(el) {
+    // Exclude the top-of-feed "start a post" composer, which reuses the same
+    // rich-text editor component as comment boxes.
+    if (el.closest('[class*="share-box" i], [class*="share-creation" i], [class*="post-creation" i]')) return false;
     if (el.closest('[class*="comment" i]')) return true;
     const label = (el.getAttribute('aria-label') || el.getAttribute('aria-placeholder') || '').toLowerCase();
     return label.includes('comment');
@@ -33,28 +36,16 @@
     return style.display !== 'none' && style.visibility !== 'hidden';
   }
 
-  function findPostContainer(editor) {
-    const candidates = ['div[data-urn]', 'article', 'div.feed-shared-update-v2', 'div[data-id]'];
-    for (const sel of candidates) {
-      const found = editor.closest(sel);
-      if (found) return found;
-    }
-    // Fall back to climbing a few levels until we hit something with real content.
-    let node = editor.parentElement;
-    for (let i = 0; i < 8 && node; i++) {
-      if ((node.innerText || '').trim().length > 200) return node;
-      node = node.parentElement;
-    }
-    return editor.parentElement || document.body;
-  }
-
-  function extractPostText(container) {
+  function extractPostText(container, excludeRoot) {
     const skipTags = new Set(['SCRIPT', 'STYLE', 'BUTTON', 'SVG', 'NOSCRIPT']);
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         const parent = node.parentElement;
         if (!parent || skipTags.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+        // Exclude the comment box / comments thread itself (existing comments,
+        // our own toolbar, "add a comment" placeholder chrome, etc).
+        if (excludeRoot && excludeRoot.contains(parent)) return NodeFilter.FILTER_REJECT;
         if (parent.closest('[class*="comment" i]')) return NodeFilter.FILTER_REJECT;
         if (!isVisible(parent)) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
@@ -70,6 +61,38 @@
       total += t.length;
     }
     return parts.join(' ').replace(/\s+/g, ' ').trim().slice(0, 3000);
+  }
+
+  // Finds the best post container for `editor` and returns its extracted
+  // text. Comment editors live inside the comments thread's own subtree
+  // (which can carry its own data-urn for the comment/reply itself), so we
+  // can't just take the nearest ancestor matching a "looks like a post"
+  // selector — that often matches a nested comment wrapper instead of the
+  // actual post. Instead: first climb out of anything "comment"-classed
+  // entirely, then walk upward scoring each ancestor by how much real
+  // (non-comment, visible) text it yields, and keep the best one.
+  function extractPostContext(editor) {
+    let commentRoot = editor.closest('[class*="comment" i]') || editor.parentElement;
+    while (commentRoot?.parentElement?.closest('[class*="comment" i]')) {
+      commentRoot = commentRoot.parentElement.closest('[class*="comment" i]');
+    }
+
+    let node = commentRoot?.parentElement || editor.parentElement;
+    let best = { container: node, text: '' };
+
+    for (let i = 0; i < 15 && node && node !== document.body; i++) {
+      const text = extractPostText(node, commentRoot);
+      // Prefer the shallowest container once text stops growing meaningfully
+      // (climbing further usually just adds unrelated feed/sidebar chrome).
+      if (text.length > best.text.length && text.length < 8000) {
+        best = { container: node, text };
+      } else if (text.length > 0 && best.text.length > 200) {
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    return { container: best.container, postText: best.text };
   }
 
   function extractAuthorName(container) {
@@ -141,17 +164,17 @@
       status.textContent = 'Reading post…';
       status.className = 'ccp-status';
 
-      const container = findPostContainer(editor);
-      const postText = extractPostText(container);
+      const { container, postText } = extractPostContext(editor);
       const authorName = extractAuthorName(container);
 
-      if (!postText) {
-        status.textContent = "Couldn't find the post text — try scrolling it fully into view.";
+      if (!postText || postText.length < 40) {
+        status.textContent = "Couldn't find the post text — try scrolling the full post into view first.";
         status.classList.add('ccp-status-error');
         button.disabled = false;
         return;
       }
 
+      console.debug('[Comment Copilot] extracted post text:', postText);
       status.textContent = 'Drafting…';
       const response = await chrome.runtime.sendMessage({
         type: 'ccp-generate',
