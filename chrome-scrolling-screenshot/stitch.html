@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Full Page Screenshot</title>
+  <link rel="stylesheet" href="stitch.css" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Full Page Screenshot</h1>
+      <div class="actions">
+        <button id="copy" class="ghost" disabled>Copy to clipboard</button>
+        <button id="download" class="primary" disabled>Download PNG</button>
+      </div>
+    </header>
+
+    <p class="status" id="status">Stitching the captured sections…</p>
+    <p class="warning" id="truncated-warning" hidden>
+      This page was taller than what could be captured in one image, so the screenshot was cut off at the bottom.
+    </p>
+
+    <div class="preview-wrap">
+      <img id="preview" alt="Captured page preview" hidden />
+    </div>
+  </div>
+
+  <script src="idb-store.js"></script>
+  <script src="stitch.js"></script>
+</body>
+</html>
