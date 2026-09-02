@@ -27,29 +27,59 @@ function pageCapturePrepare() {
   window.__pcPrevScrollBehavior = htmlEl.style.scrollBehavior;
   htmlEl.style.scrollBehavior = 'auto';
 
-  window.__pcOriginalScrollX = window.scrollX;
-  window.__pcOriginalScrollY = window.scrollY;
+  // Most pages scroll the window/document, but a fair number of modern
+  // (often SPA-style) sites keep the document itself unscrollable and
+  // instead scroll an inner container. Find whichever one actually has
+  // scrollable range so capture works either way.
+  function scrollRange(el) {
+    return el.scrollHeight - el.clientHeight;
+  }
 
-  const totalHeight = Math.max(
-    document.body.scrollHeight,
-    document.documentElement.scrollHeight,
-    document.body.offsetHeight,
-    document.documentElement.offsetHeight
-  );
+  let target = document.scrollingElement || document.documentElement;
+  let bestRange = scrollRange(target);
+
+  if (bestRange <= 1) {
+    const candidates = document.querySelectorAll('body *');
+    for (const el of candidates) {
+      const range = scrollRange(el);
+      if (range <= 1) continue;
+      const style = getComputedStyle(el);
+      if (!/(auto|scroll)/.test(style.overflowY)) continue;
+      if (range > bestRange) {
+        bestRange = range;
+        target = el;
+      }
+    }
+  }
+
+  window.__pcScrollTarget = target;
+  window.__pcIsWindowScroll = target === document.scrollingElement || target === document.documentElement;
+  window.__pcOriginalScrollX = window.__pcIsWindowScroll ? window.scrollX : target.scrollLeft;
+  window.__pcOriginalScrollY = window.__pcIsWindowScroll ? window.scrollY : target.scrollTop;
+
+  const rect = target.getBoundingClientRect();
+  const totalHeight = Math.max(target.scrollHeight, target.clientHeight);
+  const viewportHeight = window.__pcIsWindowScroll ? window.innerHeight : Math.round(rect.height);
 
   return {
     totalHeight,
     viewportWidth: window.innerWidth,
-    viewportHeight: window.innerHeight,
+    viewportHeight,
     dpr: window.devicePixelRatio || 1,
+    scrolledContainer: !window.__pcIsWindowScroll,
   };
 }
 
 async function pageCaptureScrollTo(y) {
-  window.scrollTo(0, y);
+  const target = window.__pcScrollTarget || document.scrollingElement || document.documentElement;
+  if (window.__pcIsWindowScroll) {
+    window.scrollTo(0, y);
+  } else {
+    target.scrollTop = y;
+  }
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   await new Promise((resolve) => setTimeout(resolve, 120));
-  return window.scrollY;
+  return window.__pcIsWindowScroll ? window.scrollY : target.scrollTop;
 }
 
 function pageCaptureRestore() {
@@ -60,7 +90,16 @@ function pageCaptureRestore() {
   delete window.__pcFixedEls;
 
   document.documentElement.style.scrollBehavior = window.__pcPrevScrollBehavior || '';
-  window.scrollTo(window.__pcOriginalScrollX || 0, window.__pcOriginalScrollY || 0);
+
+  const target = window.__pcScrollTarget || document.scrollingElement || document.documentElement;
+  if (window.__pcIsWindowScroll) {
+    window.scrollTo(window.__pcOriginalScrollX || 0, window.__pcOriginalScrollY || 0);
+  } else {
+    target.scrollLeft = window.__pcOriginalScrollX || 0;
+    target.scrollTop = window.__pcOriginalScrollY || 0;
+  }
+  delete window.__pcScrollTarget;
+  delete window.__pcIsWindowScroll;
 }
 
 // --- Orchestration ---
