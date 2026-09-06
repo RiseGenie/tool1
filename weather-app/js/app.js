@@ -18,18 +18,11 @@
     mood: null,
     requestId: 0,
     tiles: 'day',
+    me: null,
   };
 
   // ---- map ----------------------------------------------------------------------
-  // Keyless Esri Canvas basemaps (light for day, dark for night) with separate label layers.
-  const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
-  const TILES = {
-    day: ESRI + 'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    labels: ESRI + 'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-    night: ESRI + 'World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    nightLabels: ESRI + 'World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-  };
-  const MAX_ZOOM = 16;
+  const MAX_ZOOM = 18;
   const map = L.map('map', {
     zoomControl: false,
     worldCopyJump: true,
@@ -40,27 +33,12 @@
   }).setView([22, 10], 2.5);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-  const tileOpts = (extra) => Object.assign({ maxZoom: MAX_ZOOM, crossOrigin: true, className: 'tiles' }, extra);
-  const baseDay = L.tileLayer(TILES.day, tileOpts({ className: 'tiles tiles-day' })).addTo(map);
-  const baseNight = L.tileLayer(TILES.night, tileOpts({ opacity: 0, className: 'tiles tiles-night' })).addTo(map);
-  const labelsDay = L.tileLayer(TILES.labels, tileOpts({ pane: 'overlayPane' })).addTo(map);
-  const labelsNight = L.tileLayer(TILES.nightLabels, tileOpts({ pane: 'overlayPane', opacity: 0 })).addTo(map);
-
+  // Base layers (streets day/night, satellite, roads) live in views.js
+  Views.initBase(map, { maxZoom: MAX_ZOOM, toast });
   function setTiles(mode) {
     if (state.tiles === mode) return;
     state.tiles = mode;
-    const night = mode === 'night';
-    fadeLayer(baseDay, night ? 0 : 1); fadeLayer(labelsDay, night ? 0 : 1);
-    fadeLayer(baseNight, night ? 1 : 0); fadeLayer(labelsNight, night ? 1 : 0);
-  }
-  function fadeLayer(layer, target) {
-    const from = layer.options.opacity, start = performance.now(), dur = 900;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / dur);
-      layer.setOpacity(from + (target - from) * t);
-      if (t < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    Views.setNight(mode === 'night');
   }
 
   // ---- fx + cursor -----------------------------------------------------------------
@@ -357,6 +335,7 @@
     }
     showMe.classList.remove('is-busy');
     if (!loc) return;
+    state.me = loc;
     if (state.meMarker) state.meMarker.remove();
     state.meMarker = L.marker([loc.lat, loc.lon], { icon: L.divIcon({ className: 'me-icon', html: '<div class="pulse"></div><div class="core"></div>', iconSize: [26, 26], iconAnchor: [13, 13] }), interactive: false, zIndexOffset: -10 }).addTo(map);
     // Cinematic: zoom out a touch, then swoop in
@@ -375,7 +354,13 @@
 
   // ---- misc UI --------------------------------------------------------------------
   $('panelClose').addEventListener('click', closePanel);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('panel').classList.contains('is-open') && sugg.hidden) closePanel(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !sugg.hidden) return;
+    if (Views.isOverlayOpen()) return Views.closeOverlay();
+    if (Directions.isOpen() && !$('dirSugg').hidden) return;
+    if (Directions.isOpen()) return Directions.close();
+    if ($('panel').classList.contains('is-open')) closePanel();
+  });
 
   let toastTimer;
   function toast(msg) {
@@ -385,10 +370,52 @@
   function hideHint() { $('hint').classList.add('is-hidden'); }
   function showHint() { $('hint').classList.remove('is-hidden'); }
 
+  // ---- views, 3D, street view, directions ------------------------------------------
+  function pinContext() {
+    if (!state.marker) return null;
+    const ll = state.marker.getLatLng();
+    const f = state.forecast, n = f && f.now;
+    const weatherLine = n ? `${WeatherAPI.describe(n.code, n.isDay).icon} ${WeatherAPI.describe(n.code, n.isDay).label} · ${fmtT(n.temp)}${unit()} · ${fmtWind(n.wind)}` : '';
+    return { lat: ll.lat, lon: ll.lng, place: state.place, forecast: f, mood: state.mood, weatherLine, name: state.place && state.place.name };
+  }
+  function viewContext() {
+    // the pin if there is one; otherwise the map centre when zoomed in enough
+    const ctx = pinContext(); if (ctx) return ctx;
+    if (map.getZoom() < 6) { toast('Drop a pin (or search a place) first, then open this view.'); return null; }
+    const c = map.getCenter();
+    return { lat: c.lat, lon: c.lng, place: null, mood: null, weatherLine: '' };
+  }
+  Views.init({ toast });
+  document.querySelectorAll('.view-btn[data-view]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.view;
+    if (v === '3d') { const c = viewContext(); if (c) Views.open3D(c); }
+    else if (v === 'street') { const c = viewContext(); if (c) Views.openStreet(c); }
+    else { Views.setBase(v); toast({ streets: 'Streets view', satellite: 'Satellite view', roads: 'Road map view' }[v]); }
+  }));
+  $('quickActions').addEventListener('click', (e) => {
+    const b = e.target.closest('.quick-btn'); if (!b) return;
+    const c = pinContext(); if (!c) return;
+    switch (b.dataset.quick) {
+      case 'satellite': Views.setBase(Views.getBase() === 'satellite' ? 'streets' : 'satellite'); map.flyTo([c.lat, c.lon], Math.max(map.getZoom(), 13), { duration: 1.2 }); break;
+      case '3d': Views.open3D(c); break;
+      case 'street': Views.openStreet(c); break;
+      case 'directions': Directions.open({ to: c }); break;
+    }
+  });
+  Directions.init({
+    map, toast, selectLocation,
+    units: () => state.units,
+    fmtTemp: fmtT,
+    getPin: pinContext,
+    getMe: () => state.me ? { lat: state.me.lat, lon: state.me.lon, name: 'My location' } : null,
+    setMe: (loc) => { state.me = loc; },
+    onOpen: () => { if (window.innerWidth <= 720) $('panel').classList.remove('is-open'); },
+  });
+
   // Deep-link support: #lat,lon
   const m = /^#(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(location.hash);
   if (m) selectLocation(+m[1], +m[2], { zoom: 9 });
 
   // Expose a little for debugging in the console
-  window.PindropWeather = { map, state, selectLocation, applyMood };
+  window.PindropWeather = { map, state, selectLocation, applyMood, pinContext };
 })();

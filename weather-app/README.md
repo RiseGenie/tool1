@@ -51,6 +51,26 @@ npx serve weather-app
   pin while hovering the map in drop-pin mode, hover/press/text states, and a
   particle trail that matches the weather (raindrops, snowflakes, sparks,
   petals, leaves, stars, bolts, mist).
+- **Map views.** A switcher in the corner flips between pastel **Streets**
+  (day/night), **Satellite** imagery with place labels, and a detailed
+  **Roads** map. The weather tint and motion graphics stay on top of all three.
+- **3D flyover.** A cinematic terrain "video": the camera dives from orbit onto
+  the pin, tilts to 66°, and slowly circles it over real elevation data with
+  satellite imagery draped on the mountains, a weather-matched sky, and the
+  same rain/snow/leaves/stars effects. Play/pause, replay, speed and relief
+  sliders; drag to look around.
+- **Street view.** Road-level photos around the pin (KartaView community
+  imagery) as an auto-playing "look around" slideshow with a compass, the
+  live weather pinned on the photo, and one-tap links to Google Street View,
+  Mapillary and KartaView for the exact spot.
+- **Directions with weather along the way.** Start/destination with
+  autocomplete, "use my location" and "use the pin", swap, drive/bike/walk.
+  The route draws itself onto the map with a flowing dashed line and a little
+  vehicle driving it; distance, time and arrival; turn-by-turn steps you can
+  click to jump to; and the forecast at the start, the middle and the end for
+  the time you would actually be there (with rain chance) plus a one-line
+  travel tip such as "Rain near Reading around 14:05 — pack an umbrella".
+  Tap any waypoint chip to drop the pin there and see the couple react.
 - **Details**: current temperature, feels-like, condition, humidity, wind,
   cloud cover, rain chance, sunrise/sunset, the next 12 hours and a 7-day
   outlook with temperature range bars. °C/°F toggle is remembered.
@@ -66,7 +86,10 @@ npx serve weather-app
 | Place search | Open-Meteo Geocoding |
 | Reverse geocoding | BigDataCloud client API, Nominatim fallback |
 | IP location fallback | ipwho.is |
-| Map tiles | Esri World Light Gray / Dark Gray Canvas |
+| Map tiles | Esri World Light Gray / Dark Gray Canvas, World Imagery, World Street Map |
+| 3D terrain | AWS Terrain Tiles (Terrarium) via MapLibre GL 4.7 |
+| Routing | OSRM public demo server |
+| Street-level photos | KartaView (OpenStreetCam) API |
 | Map library | Leaflet 1.9.4 (cdnjs) |
 
 ## Project structure
@@ -81,6 +104,8 @@ weather-app/
     ├── characters.js    SVG man & woman builder, props and the 13 scenes
     ├── fx.js            canvas particle/motion-graphics engine with crossfading layers
     ├── cursor.js        custom animated cursor + weather trail
+    ├── views.js         base-layer switcher, 3D terrain flyover, street-level photo view
+    ├── directions.js    OSRM routing, animated route, steps, weather along the route
     └── app.js           Leaflet map, pin drop, search, Show me, panel rendering
 ```
 

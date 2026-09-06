@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" integrity="sha512-qN/uDg9bS3IAldWq4lswyC+9ZSoShtfyNDp+FaJhdtXJqdgubHA+s4nB8BajW0m90Y0+RBGbqu2anzbxiQYdHA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-mode="ambient" data-weather="ambient" data-time="day">
@@ -49,6 +50,11 @@
           <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/><circle cx="12" cy="9" r="2.6" fill="#fff"/></svg>
         </span>
         <span class="label">Drop pin</span>
+      </button>
+
+      <button type="button" class="btn directions-btn" id="dirBtn" title="Directions with weather along the way">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="18" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8.5 16.5C12 13 12 11 15.5 8.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="3 3"/></svg>
+        <span class="label">Directions</span>
       </button>
 
       <button type="button" class="btn units" id="unitsBtn" aria-label="Toggle temperature units">°C</button>
@@ -103,6 +109,13 @@
         <p id="placeMeta">—</p>
       </div>
 
+      <div class="quick" id="quickActions">
+        <button type="button" class="quick-btn" data-quick="satellite"><span>🛰️</span>Satellite</button>
+        <button type="button" class="quick-btn" data-quick="3d"><span>🎬</span>3D flyover</button>
+        <button type="button" class="quick-btn" data-quick="street"><span>📷</span>Street view</button>
+        <button type="button" class="quick-btn" data-quick="directions"><span>🧭</span>Directions</button>
+      </div>
+
       <div class="stage" id="stage">
         <canvas id="stageFx" class="stage-fx" aria-hidden="true"></canvas>
         <div class="stage-ground" aria-hidden="true"></div>
@@ -136,9 +149,106 @@
       <h3 class="section-title">This week</h3>
       <div class="daily" id="daily"></div>
 
-      <p class="credit">Weather by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Map tiles © <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a></p>
+      <p class="credit">Weather by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Map tiles © <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> · Routing by <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> · Terrain by <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles</a></p>
     </div>
   </aside>
+
+  <!-- Map view switcher -->
+  <nav class="viewbar" id="viewBar" aria-label="Map views">
+    <button type="button" class="view-btn is-on" data-view="streets" title="Streets (pastel day / navy night)"><span>🗺️</span><small>Streets</small></button>
+    <button type="button" class="view-btn" data-view="satellite" title="Satellite imagery"><span>🛰️</span><small>Satellite</small></button>
+    <button type="button" class="view-btn" data-view="roads" title="Detailed road map"><span>🛣️</span><small>Roads</small></button>
+    <span class="view-sep" aria-hidden="true"></span>
+    <button type="button" class="view-btn" data-view="3d" title="3D terrain flyover video"><span>🎬</span><small>3D</small></button>
+    <button type="button" class="view-btn" data-view="street" title="Street-level road view"><span>📷</span><small>Street</small></button>
+  </nav>
+
+  <!-- Directions card -->
+  <aside class="dir" id="dirCard" aria-label="Directions" hidden>
+    <div class="dir-head">
+      <h3><span aria-hidden="true">🧭</span> Directions</h3>
+      <button type="button" class="panel-close" id="dirClose" aria-label="Close directions">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form class="dir-form" id="dirForm" autocomplete="off">
+      <div class="dir-row">
+        <span class="dir-dot a">A</span>
+        <input type="text" id="dirFrom" placeholder="From — a place, or use my location" aria-label="Start" />
+        <button type="button" class="dir-mini" id="dirMe" title="Use my location">📍</button>
+      </div>
+      <button type="button" class="dir-swap" id="dirSwap" title="Swap start and destination" aria-label="Swap">⇅</button>
+      <div class="dir-row">
+        <span class="dir-dot b">B</span>
+        <input type="text" id="dirTo" placeholder="To — a place, or the dropped pin" aria-label="Destination" />
+        <button type="button" class="dir-mini" id="dirPin" title="Use the dropped pin">📌</button>
+      </div>
+      <ul class="suggestions dir-sugg" id="dirSugg" role="listbox" hidden></ul>
+      <div class="dir-modes" role="radiogroup" aria-label="Travel mode">
+        <button type="button" class="dir-mode is-on" data-mode="driving" role="radio" aria-checked="true">🚗 Drive</button>
+        <button type="button" class="dir-mode" data-mode="bike" role="radio" aria-checked="false">🚲 Bike</button>
+        <button type="button" class="dir-mode" data-mode="foot" role="radio" aria-checked="false">🚶 Walk</button>
+      </div>
+      <button type="submit" class="dir-go" id="dirGo">Route it <span aria-hidden="true">→</span></button>
+    </form>
+    <div class="dir-result" id="dirResult" hidden>
+      <div class="dir-summary">
+        <strong id="dirDist">—</strong>
+        <span id="dirTime">—</span>
+        <em id="dirEta">—</em>
+      </div>
+      <p class="dir-advice" id="dirAdvice"></p>
+      <h4 class="section-title">Weather along the way</h4>
+      <div class="dir-weather" id="dirWeather"></div>
+      <h4 class="section-title">Turn by turn</h4>
+      <ol class="dir-steps" id="dirSteps"></ol>
+      <button type="button" class="dir-clear" id="dirClear">Clear route</button>
+    </div>
+    <div class="dir-loading" id="dirLoading" hidden><span class="loader-cloud"><span></span><span></span><span></span></span> Finding the way…</div>
+  </aside>
+
+  <!-- 3D flyover -->
+  <section class="v3d" id="view3d" aria-label="3D flyover" hidden>
+    <div id="gl" class="v3d-map"></div>
+    <canvas id="fx3d" class="v3d-fx" aria-hidden="true"></canvas>
+    <div class="v3d-vignette" aria-hidden="true"></div>
+    <div class="v3d-bar top">
+      <div class="v3d-title">
+        <span class="v3d-rec" aria-hidden="true"></span>
+        <div><strong id="v3dPlace">—</strong><small id="v3dWeather">—</small></div>
+      </div>
+      <button type="button" class="panel-close v3d-close" id="v3dClose" aria-label="Exit 3D">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="v3d-bar bottom">
+      <button type="button" class="v3d-btn" id="v3dPlay" aria-pressed="true">⏸ Pause</button>
+      <button type="button" class="v3d-btn" id="v3dReplay">↻ Replay</button>
+      <label class="v3d-speed">Speed <input type="range" id="v3dSpeed" min="0.3" max="3" step="0.1" value="1" /></label>
+      <label class="v3d-speed">Relief <input type="range" id="v3dExag" min="0.5" max="3" step="0.1" value="1.5" /></label>
+      <span class="v3d-hint">Drag to look around · scroll to zoom</span>
+    </div>
+    <p class="v3d-loading" id="v3dLoading">Loading terrain…</p>
+  </section>
+
+  <!-- Street-level view -->
+  <section class="sv" id="streetView" aria-label="Street view" hidden>
+    <div class="sv-card">
+      <div class="sv-head">
+        <div><strong id="svPlace">—</strong><small id="svMeta">Street-level imagery near the pin</small></div>
+        <button type="button" class="panel-close" id="svClose" aria-label="Close street view">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="sv-frame" id="svFrame"></div>
+      <div class="sv-strip" id="svStrip" hidden></div>
+      <div class="sv-actions">
+        <a class="sv-link google" id="svGoogle" href="#" target="_blank" rel="noopener">Open in Google Street View ↗</a>
+        <a class="sv-link" id="svMapillary" href="#" target="_blank" rel="noopener">Mapillary ↗</a>
+        <a class="sv-link" id="svKarta" href="#" target="_blank" rel="noopener">KartaView ↗</a>
+      </div>
+    </div>
+  </section>
 
   <!-- Custom cursor -->
   <div class="cursor" id="cursor" aria-hidden="true">
@@ -151,11 +261,14 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js" integrity="sha512-dXgoFR02YHJ9Fa29P3D/1umNaZ0EXS2N0w29Lm3b/1BK8UDLMdLWDFwuujIyJJdU27/PLuk3dmS1V9NO8ABX1A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="js/weather-api.js"></script>
   <script src="js/moods.js"></script>
   <script src="js/characters.js"></script>
   <script src="js/fx.js"></script>
   <script src="js/cursor.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/directions.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
