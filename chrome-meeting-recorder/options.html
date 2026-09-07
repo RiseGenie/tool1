@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Meeting Recorder Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <div class="page">
+    <header>
+      <div class="brand">
+        <img src="icons/icon32.png" alt="" width="24" height="24" />
+        <div>
+          <h1>Meeting Recorder &amp; Notes</h1>
+          <p class="subtitle">Settings</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2><span class="badge">1</span> AI summary</h2>
+      <p class="hint">
+        Used to turn the live transcript into structured meeting notes, a
+        summary, and to-dos. Get a key at
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+        Stored locally in this browser only, never sent anywhere except
+        Anthropic's API.
+      </p>
+      <label for="anthropicApiKey">Anthropic API key</label>
+      <input type="password" id="anthropicApiKey" placeholder="sk-ant-..." autocomplete="off" />
+    </section>
+
+    <section class="card">
+      <h2><span class="badge">2</span> Email delivery</h2>
+      <p class="hint">
+        Sent via <a href="https://resend.com" target="_blank" rel="noopener">Resend</a>.
+        The "from" address must belong to a domain you've verified in your
+        Resend account, or sending will fail.
+      </p>
+      <label for="resendApiKey">Resend API key</label>
+      <input type="password" id="resendApiKey" placeholder="re_..." autocomplete="off" />
+
+      <label for="fromEmail">From address</label>
+      <input type="email" id="fromEmail" placeholder="info@risegenie.com" />
+
+      <label for="fromName">From name</label>
+      <input type="text" id="fromName" placeholder="RiseGenie Meeting Recorder" />
+
+      <label for="toEmail">Send notes to</label>
+      <input type="email" id="toEmail" placeholder="risegenie@gmail.com" />
+    </section>
+
+    <div class="actions">
+      <button id="save" class="primary">Save settings</button>
+      <span id="status" class="status" role="status"></span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
