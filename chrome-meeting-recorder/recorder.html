@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Meeting Recorder</title>
+  <link rel="stylesheet" href="recorder.css" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <img src="icons/icon32.png" alt="" width="20" height="20" />
+        <span>Meeting Recorder</span>
+      </div>
+      <button id="settings-link" class="icon-btn" title="Settings">&#9881;</button>
+    </header>
+
+    <!-- Idle state -->
+    <section id="state-idle" class="state">
+      <p class="lead">Record this meeting's screen, get a live transcript, and have the notes emailed to you automatically.</p>
+      <button id="start-btn" class="primary big">Start Recording</button>
+      <p class="hint">You'll be asked to pick a screen, window, or tab to share.</p>
+      <p id="key-warning" class="warning" hidden></p>
+    </section>
+
+    <!-- Recording state -->
+    <section id="state-recording" class="state" hidden>
+      <div class="rec-row">
+        <span class="rec-dot"></span>
+        <span>Recording</span>
+        <span id="timer" class="timer">00:00</span>
+      </div>
+      <div class="transcript-box" id="transcript-box">
+        <p class="transcript-placeholder" id="transcript-placeholder">Listening for speech…</p>
+      </div>
+      <button id="stop-btn" class="danger big">Stop &amp; Generate Notes</button>
+    </section>
+
+    <!-- Processing state -->
+    <section id="state-processing" class="state" hidden>
+      <div class="spinner"></div>
+      <p id="processing-label" class="lead center">Generating your meeting notes…</p>
+    </section>
+
+    <!-- Done state -->
+    <section id="state-done" class="state" hidden>
+      <p id="email-status" class="email-status"></p>
+
+      <div class="result-block">
+        <h3>Summary</h3>
+        <p id="result-summary"></p>
+      </div>
+
+      <div class="result-block">
+        <h3>To-dos</h3>
+        <ul id="result-todos" class="todo-list"></ul>
+      </div>
+
+      <div class="result-block">
+        <h3>Meeting notes</h3>
+        <ul id="result-notes" class="notes-list"></ul>
+      </div>
+
+      <div class="result-block">
+        <details>
+          <summary>Full transcript</summary>
+          <pre id="result-transcript" class="transcript-pre"></pre>
+        </details>
+      </div>
+
+      <div class="done-actions">
+        <button id="download-recording" class="ghost">Download recording (.webm)</button>
+        <button id="retry-email" class="ghost" hidden>Retry sending email</button>
+        <button id="close-btn" class="primary">Close</button>
+      </div>
+    </section>
+
+    <!-- Error state -->
+    <section id="state-error" class="state" hidden>
+      <p class="lead error-text" id="error-text"></p>
+      <button id="error-retry" class="primary big">Try Again</button>
+    </section>
+  </div>
+
+  <script src="recorder.js"></script>
+</body>
+</html>
