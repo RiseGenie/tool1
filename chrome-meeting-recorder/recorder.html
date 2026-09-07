@@ -6,19 +6,29 @@
   <link rel="stylesheet" href="recorder.css" />
 </head>
 <body>
+  <div class="glow" aria-hidden="true"></div>
+
   <div class="page">
     <header>
       <div class="brand">
-        <img src="icons/icon32.png" alt="" width="20" height="20" />
+        <img src="icons/icon32.png" alt="" width="22" height="22" />
         <span>Meeting Recorder</span>
       </div>
-      <button id="settings-link" class="icon-btn" title="Settings">&#9881;</button>
+      <button id="settings-link" class="icon-btn" title="Settings" aria-label="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
     </header>
 
     <!-- Idle state -->
     <section id="state-idle" class="state">
+      <div class="hero-icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2.2"/><circle cx="12" cy="11" r="3.2" fill="currentColor" stroke="none"/></svg>
+      </div>
       <p class="lead">Record this meeting's screen, get a live transcript, and have the notes emailed to you automatically.</p>
-      <button id="start-btn" class="primary big">Start Recording</button>
+      <button id="start-btn" class="primary big">
+        <span class="rec-dot small" aria-hidden="true"></span>
+        Start Recording
+      </button>
       <p class="hint">You'll be asked to pick a screen, window, or tab to share.</p>
       <p id="key-warning" class="warning" hidden></p>
     </section>
@@ -31,15 +41,15 @@
         <span id="timer" class="timer">00:00</span>
       </div>
       <div class="transcript-box" id="transcript-box">
-        <p class="transcript-placeholder" id="transcript-placeholder">Listening for speech…</p>
+        <p class="transcript-placeholder" id="transcript-placeholder">Listening for speech&hellip;</p>
       </div>
       <button id="stop-btn" class="danger big">Stop &amp; Generate Notes</button>
     </section>
 
     <!-- Processing state -->
     <section id="state-processing" class="state" hidden>
-      <div class="spinner"></div>
-      <p id="processing-label" class="lead center">Generating your meeting notes…</p>
+      <div class="spinner" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p id="processing-label" class="lead center">Generating your meeting notes&hellip;</p>
     </section>
 
     <!-- Done state -->

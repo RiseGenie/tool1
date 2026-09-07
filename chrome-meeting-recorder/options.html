@@ -6,14 +6,21 @@
   <link rel="stylesheet" href="options.css" />
 </head>
 <body>
+  <div class="glow" aria-hidden="true"></div>
+
   <div class="page">
     <header>
-      <h1>Meeting Recorder &amp; Notes</h1>
-      <p class="subtitle">Settings</p>
+      <div class="brand">
+        <img src="icons/icon32.png" alt="" width="24" height="24" />
+        <div>
+          <h1>Meeting Recorder &amp; Notes</h1>
+          <p class="subtitle">Settings</p>
+        </div>
+      </div>
     </header>
 
     <section class="card">
-      <h2>AI summary</h2>
+      <h2><span class="badge">1</span> AI summary</h2>
       <p class="hint">
         Used to turn the live transcript into structured meeting notes, a
         summary, and to-dos. Get a key at
@@ -26,7 +33,7 @@
     </section>
 
     <section class="card">
-      <h2>Email delivery</h2>
+      <h2><span class="badge">2</span> Email delivery</h2>
       <p class="hint">
         Sent via <a href="https://resend.com" target="_blank" rel="noopener">Resend</a>.
         The "from" address must belong to a domain you've verified in your
