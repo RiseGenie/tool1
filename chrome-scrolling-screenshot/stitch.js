@@ -2,6 +2,7 @@ const statusEl = document.getElementById('status');
 const previewEl = document.getElementById('preview');
 const truncatedWarning = document.getElementById('truncated-warning');
 const downloadBtn = document.getElementById('download');
+const downloadPdfBtn = document.getElementById('download-pdf');
 const copyBtn = document.getElementById('copy');
 
 function loadImage(src) {
@@ -23,7 +24,16 @@ function filenameFor(sourceUrl) {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  return `screenshot-${host}-${stamp}.png`;
+  return `screenshot-${host}-${stamp}`;
+}
+
+function triggerDownload(objectUrl, filename) {
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 async function main() {
@@ -50,6 +60,12 @@ async function main() {
   canvas.height = canvasHeight;
   const ctx = canvas.getContext('2d');
 
+  // Fill white first so any uncaptured gap (e.g. the last, partial section
+  // of a truncated page) reads as blank page rather than transparent black
+  // once flattened into a JPEG for the PDF export.
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
   images.forEach((img, i) => {
     const y = capture.totalHeight != null ? Math.round(capture.slices[i].y * capture.dpr) : 0;
     ctx.drawImage(img, 0, y);
@@ -64,16 +80,11 @@ async function main() {
   previewEl.hidden = false;
   statusEl.textContent = `${canvasWidth} × ${canvasHeight}px${images.length > 1 ? ` · stitched from ${images.length} sections` : ''}`;
 
-  const filename = filenameFor(capture.sourceUrl);
+  const baseName = filenameFor(capture.sourceUrl);
 
   downloadBtn.disabled = false;
   downloadBtn.addEventListener('click', () => {
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    triggerDownload(objectUrl, `${baseName}.png`);
   });
 
   copyBtn.disabled = false;
@@ -87,6 +98,32 @@ async function main() {
       copyBtn.textContent = 'Copy failed';
       setTimeout(() => { copyBtn.textContent = 'Copy to clipboard'; }, 1500);
     }
+  });
+
+  downloadPdfBtn.disabled = false;
+  downloadPdfBtn.addEventListener('click', async () => {
+    const original = downloadPdfBtn.textContent;
+    downloadPdfBtn.disabled = true;
+    downloadPdfBtn.textContent = 'Building PDF…';
+    try {
+      const jpegBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
+      const pdfBlob = buildPdfBlob({
+        jpegBytes,
+        imgWidthPx: canvasWidth,
+        imgHeightPx: canvasHeight,
+      });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      triggerDownload(pdfUrl, `${baseName}.pdf`);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (err) {
+      downloadPdfBtn.textContent = 'PDF failed';
+      setTimeout(() => { downloadPdfBtn.textContent = original; }, 1500);
+      return;
+    } finally {
+      downloadPdfBtn.disabled = false;
+    }
+    downloadPdfBtn.textContent = original;
   });
 }
 

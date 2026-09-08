@@ -16,7 +16,8 @@ then lets you preview, copy, or download it as a PNG.
 - **Visible-area-only mode**: a quick single-viewport screenshot when you
   don't need the whole page.
 - **Result page**: opens in a new tab with a scrollable preview, a
-  **Download PNG** button, and a **Copy to clipboard** button.
+  **Download PNG** button, a **Download PDF** button (paginated to US
+  Letter width), and a **Copy to clipboard** button.
 - **Keyboard shortcut** (`Ctrl+Shift+S` / `Cmd+Shift+S`, configurable at
   `chrome://extensions/shortcuts`) for full-page capture without opening
   the popup.
@@ -53,6 +54,14 @@ then lets you preview, copy, or download it as a PNG.
   32,000px of captured height, ~80 sections) to stay within canvas size
   limits and avoid the capture running forever; if a page is cut off, the
   result page shows a note saying so.
+- **PDF export** (`pdf-export.js`) is a small hand-built PDF writer with no
+  external library (MV3 extension pages can't load remote scripts, and
+  bundling a general-purpose PDF library felt heavy for one feature). The
+  stitched canvas is flattened to a single JPEG, embedded once as a shared
+  PDF image object, and each page's content stream just repositions that
+  same image via its transform matrix so only the right vertical slice
+  falls inside that page's US Letter-sized `MediaBox` — no per-page image
+  duplication, so file size stays reasonable even for many pages.
 
 ## Project structure
 
@@ -60,6 +69,7 @@ then lets you preview, copy, or download it as a PNG.
 manifest.json     Extension manifest (MV3)
 background.js       Service worker: scroll/capture orchestration
 idb-store.js         Shared IndexedDB helper (background.js + stitch.js)
+pdf-export.js        Dependency-free multi-page PDF writer (used by stitch.js)
 popup.html/.css/.js  Toolbar popup: trigger full-page or visible-area capture
 stitch.html/.css/.js Result page: stitches slices, preview, download, copy
 icons/              Generated PNG icons (16/32/48/128)
