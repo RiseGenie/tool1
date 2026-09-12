@@ -1,0 +1,31 @@
+{
+  "name": "warmysender",
+  "description": "WarmySender outreach for AI agents — cold email, warmup, LinkedIn, Instagram, WhatsApp, email verification and 200M leads",
+  "owner": {
+    "name": "WarmySender",
+    "email": "hello@warmysender.com"
+  },
+  "plugins": [
+    {
+      "name": "warmysender",
+      "description": "WarmySender for AI agents — run cold email, email warmup, LinkedIn, Instagram and WhatsApp outreach on autopilot, verify emails and tap a 200M B2B lead database from Claude, ChatGPT, Cursor, Codex, OpenClaw, Hermes Agent or any agent that speaks MCP. The agent never sends directly and never raises a limit: WarmySender's scheduler paces every action inside safe limits.",
+      "category": "productivity",
+      "source": {
+        "type": "local",
+        "path": "./"
+      },
+      "homepage": "https://warmysender.com/ai-agents",
+      "keywords": [
+        "warmysender",
+        "warmysender cold email",
+        "warmysender warmup",
+        "warmysender linkedin outreach",
+        "warmysender email verification",
+        "warmysender leads"
+      ],
+      "domains": [
+        "warmysender.com"
+      ]
+    }
+  ]
+}

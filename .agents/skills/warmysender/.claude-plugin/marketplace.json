@@ -1,0 +1,18 @@
+{
+  "name": "warmysender",
+  "owner": {
+    "name": "WarmySender",
+    "email": "hello@warmysender.com"
+  },
+  "metadata": {
+    "description": "WarmySender outreach skill for AI agents — cold email, warmup, LinkedIn, Instagram, WhatsApp, email verification and 200M leads",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "warmysender",
+      "description": "WarmySender for AI agents — run cold email, email warmup, LinkedIn, Instagram and WhatsApp outreach on autopilot, verify emails and tap a 200M B2B lead database from Claude, ChatGPT, Cursor, Codex, OpenClaw, Hermes Agent or any agent that speaks MCP. The agent never sends directly and never raises a limit: WarmySender's scheduler paces every action inside safe limits.",
+      "source": "./"
+    }
+  ]
+}

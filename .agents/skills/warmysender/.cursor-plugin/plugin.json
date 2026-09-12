@@ -1,0 +1,34 @@
+{
+  "name": "warmysender",
+  "version": "1.0.0",
+  "description": "WarmySender for AI agents — run cold email, email warmup, LinkedIn, Instagram and WhatsApp outreach on autopilot, verify emails and tap a 200M B2B lead database from Claude, ChatGPT, Cursor, Codex, OpenClaw, Hermes Agent or any agent that speaks MCP. The agent never sends directly and never raises a limit: WarmySender's scheduler paces every action inside safe limits.",
+  "author": {
+    "name": "WarmySender",
+    "email": "hello@warmysender.com"
+  },
+  "homepage": "https://warmysender.com/ai-agents",
+  "repository": "https://github.com/fortuneflick/warmysender-claude-plugin",
+  "license": "MIT",
+  "logo": "assets/logo.svg",
+  "keywords": [
+    "warmysender",
+    "cold-email",
+    "email-warmup",
+    "linkedin-outreach",
+    "instagram-outreach",
+    "whatsapp-outreach",
+    "email-verification",
+    "b2b-leads",
+    "ai-agent",
+    "mcp",
+    "outreach-automation",
+    "sales-outreach",
+    "multichannel"
+  ],
+  "skills": [
+    "./skills/warmysender",
+    "./skills/campaign-doctor",
+    "./skills/cold-email-launch",
+    "./skills/list-hygiene"
+  ]
+}

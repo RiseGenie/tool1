@@ -1,0 +1,35 @@
+name: Sync plugin skill
+
+# Keeps skills/warmysender/SKILL.md identical to the root SKILL.md so the
+# Claude Code, Cursor and Grok manifests always point at a real, current file.
+
+on:
+  push:
+    branches: [main]
+    paths: [SKILL.md]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Copy SKILL.md into the plugin skill directory
+        run: |
+          mkdir -p skills/warmysender
+          cp SKILL.md skills/warmysender/SKILL.md
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet -- skills/warmysender/SKILL.md; then
+            echo "already up to date"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/warmysender/SKILL.md
+          git commit -m "chore: sync plugin skill from root SKILL.md"
+          git push origin main
