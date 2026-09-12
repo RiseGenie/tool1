@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>8K Wallpaper Builder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>8K Wallpaper Builder</h1>
+      <p class="subtitle">Pick a style, a topic and an aspect ratio — generate a unique wallpaper and export it as a true 8K PNG.</p>
+    </header>
+
+    <main class="layout">
+      <section class="controls" aria-label="Wallpaper controls">
+
+        <div class="field">
+          <label for="style">Category / Style</label>
+          <select id="style"></select>
+        </div>
+
+        <div class="field">
+          <label for="topic">Topic</label>
+          <select id="topic"></select>
+        </div>
+
+        <div class="field">
+          <label for="ratio">Aspect Ratio</label>
+          <select id="ratio"></select>
+        </div>
+
+        <div class="field seed-field">
+          <label for="seed">Seed</label>
+          <div class="seed-row">
+            <input type="number" id="seed" min="0" max="999999" value="1" />
+            <button type="button" id="randomizeSeed" class="btn btn-ghost" title="Randomize seed">🎲</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="previewBtn" class="btn btn-primary">Generate Preview</button>
+          <button type="button" id="downloadBtn" class="btn btn-secondary">Download 8K PNG</button>
+        </div>
+
+        <p class="resolution-note" id="resolutionNote"></p>
+        <p class="status" id="statusText" aria-live="polite"></p>
+      </section>
+
+      <section class="preview-wrap" aria-label="Wallpaper preview">
+        <div class="canvas-frame" id="canvasFrame">
+          <canvas id="previewCanvas"></canvas>
+          <div class="overlay" id="overlay">
+            <div class="spinner"></div>
+            <span id="overlayText">Generating…</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>Rendered entirely in your browser — nothing is uploaded.</span>
+    </footer>
+  </div>
+
+  <canvas id="renderCanvas" style="display:none"></canvas>
+
+  <script src="js/palettes.js"></script>
+  <script src="js/styles.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

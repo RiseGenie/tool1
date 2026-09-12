@@ -1,0 +1,817 @@
+{
+  "_notes": [
+    "DRAFT — not submitted. Generated 2026-09-09 from the live tool manifest; re-generate before submitting if any tool changed (annotations below are read from code, not guessed).",
+    "Submit LAST, after the Anthropic, Cursor and xAI listings (see SUBMISSIONS.md).",
+    "Owner must do, per https://developers.openai.com/apps-sdk/app-submission-guidelines and https://developers.openai.com/plugins/deploy/submission:",
+    "1. Access: an organization role with Apps Management = Write (org owners already have it) in the OpenAI Platform.",
+    "2. Identity: complete individual or business verification in OpenAI Platform organization settings and select it in the Developer Identity field; unverified or mismatched publisher identity is rejected.",
+    "3. Listing materials: plugin name, short description, long description, logo (production-ready brand asset), category, website, support URL, privacy policy URL, terms URL — all public and matching the publisher identity.",
+    "4. Remote MCP: public production server URL (Universal type), domain verification by hosting the exact token at https://warmysender.com/.well-known/openai-apps-challenge (the app already serves this route from an environment value — set the token there), authentication details, and a content security policy if any UI component fetches from other domains (no UI component today).",
+    "5. Test credentials: login + password for a fully featured demo account WITH sample data that completes every test case without MFA, SMS, email confirmation, new sign-up or private-network access. The existing sign-up flow requires email confirmation, so create the demo account by hand and confirm it before submitting.",
+    "6. Tool annotations: readOnlyHint, openWorldHint and destructiveHint for every tool (below) with a justification each. Review the openWorldHint policy: OpenAI wants true for tools that post, send messages or publish content — the server sets it true on start/resume/enroll/publish/close tools; confirm the remaining write tools are workspace-bounded before attesting.",
+    "7. Prompts: starter prompts showing the highest-value workflows (drafted below).",
+    "8. Test cases: minimum five positive (prompt, expected tool/skill behaviour, expected result shape, fixture data) and three negative (prompt, expected refusal/clarification, why it must not complete) — drafted below, fill in the fixture data from the demo account.",
+    "9. Availability: choose the countries/regions where publisher, product, support and legal terms are ready.",
+    "10. Release notes: what the plugin does, initial submission, anything reviewers need about the demo account.",
+    "11. Commerce: the plugin must not display plans, start subscriptions or promote upgrades; it may say a feature is not on the user's plan and link to an informational plans page. The skill's plan-gate wording points at /pricing — confirm that page is informational (no checkout) or change the link before submitting.",
+    "12. Privacy: tool responses must not include diagnostic/telemetry/internal identifiers (session, trace, request ids, timestamps beyond what the user asked for). Audit responses against https://warmysender.com/privacy before Scan Tools.",
+    "13. Portal: Create plugin → With MCP → Info, MCP (Scan Tools, fix, rescan), Skills (import static skills or upload SKILL.md bundle), Prompts, Testing, Global, Submit → policy attestations → Submit for Review. After approval, publish from the portal.",
+    "14. Demo walkthrough: the guidelines page fetched on 2026-09-09 did not state a demo-video requirement or per-platform (web/iOS/Android) requirement; if the portal asks for one, record the positive test cases in developer mode on web and on the ChatGPT iOS and Android apps.",
+    "15. Only after Scan Tools succeeds do tool descriptions/annotations freeze as a reviewed snapshot; any later tool change needs a new version submission."
+  ],
+  "app_name": "WarmySender",
+  "short_description": "Run cold email, warmup, LinkedIn, Instagram and WhatsApp outreach, email verification and 200M+ B2B leads from ChatGPT.",
+  "long_description": "WarmySender lets ChatGPT run your outreach in plain language: build, launch and manage cold email, LinkedIn, Instagram and WhatsApp campaigns, enroll prospects, verify email addresses (single or whole lists), search a 200M+ B2B lead database and save the leads you want, and tune email warmup — all inside the WarmySender workspace you already have. The agent never sends a message itself: creating or launching only writes the campaign and hands it to WarmySender's scheduler, which paces every email, LinkedIn, Instagram and WhatsApp action inside each account's safe daily, weekly and hourly limits and the gradual ramp for new accounts. No tool can raise a limit. Connecting or disconnecting mailboxes and social accounts stays in the WarmySender app. 78 workspace-scoped tools, each annotated as read-only, write or destructive so ChatGPT asks before anything that stops or removes work.",
+  "categories": [
+    "Productivity",
+    "Sales",
+    "Marketing"
+  ],
+  "website": "https://warmysender.com",
+  "mcp_server": {
+    "url_type": "Universal",
+    "url": "https://warmysender.com/mcp",
+    "transport": "streamable-http",
+    "domain_verification": "https://warmysender.com/.well-known/openai-apps-challenge"
+  },
+  "authentication": {
+    "type": "OAuth 2.1",
+    "dynamic_client_registration": true,
+    "discovery": [
+      "https://warmysender.com/.well-known/oauth-protected-resource",
+      "https://warmysender.com/.well-known/oauth-authorization-server"
+    ],
+    "notes": "Client registers itself, user signs in to WarmySender in the browser. No API key is required for ChatGPT."
+  },
+  "privacy_policy_url": "https://warmysender.com/privacy",
+  "terms_url": "https://warmysender.com/terms",
+  "support_url": "https://warmysender.com/support",
+  "support_contact": "hello@warmysender.com",
+  "skills": {
+    "source": "upload",
+    "path": "skills/warmysender/SKILL.md"
+  },
+  "starter_prompts": [
+    "Show me my running campaigns and which ones sent nothing today, with the reason.",
+    "Create a 3-step cold email campaign for the 'Agencies EU' list, Mon–Fri 9–17 Europe/Berlin, 40 a day per mailbox, stop on reply, and show me the draft before starting.",
+    "Which mailboxes are still warming up? Set the ones past day 14 to 40 warmup emails a day.",
+    "Verify the 'Trade show 2026' list, tell me the cost first, then build a clean list of deliverable addresses.",
+    "Find marketing directors at software companies in Texas in the 200M+ lead database and save the best 100 to a new list.",
+    "Explain why my LinkedIn campaign is sending slowly and when the limit lifts."
+  ],
+  "test_cases": {
+    "positive": [
+      {
+        "prompt": "What workspace am I connected to and what can this connection do?",
+        "expected_behavior": "Calls get_workspace_info; reports workspace name, scopes and plan.",
+        "expected_result_shape": "Workspace summary object.",
+        "fixture": "Demo account, any workspace."
+      },
+      {
+        "prompt": "List my email campaigns.",
+        "expected_behavior": "Calls list_campaigns; presents name, status, counters.",
+        "expected_result_shape": "Array of campaigns with cursor.",
+        "fixture": "Demo workspace with at least 2 campaigns."
+      },
+      {
+        "prompt": "Create a draft cold email campaign called 'Demo Q4' with one step using my 'Intro' template, sending 9–17 on weekdays, and do not start it.",
+        "expected_behavior": "Calls list_email_templates then create_campaign; returns the draft id; does NOT call start_campaign.",
+        "expected_result_shape": "Campaign object with status draft.",
+        "fixture": "Demo workspace with a saved template named 'Intro' and one connected mailbox."
+      },
+      {
+        "prompt": "How many emails can I verify right now?",
+        "expected_behavior": "Calls get_verification_allowance; reports the number and where the allowance comes from.",
+        "expected_result_shape": "Allowance object.",
+        "fixture": "Demo workspace with verification allowance > 0."
+      },
+      {
+        "prompt": "Search the lead database for dentists in Austin and show me 10.",
+        "expected_behavior": "Calls search_leads (free, masked); presents 10 masked rows; does not save or export without being asked.",
+        "expected_result_shape": "Paged masked lead rows.",
+        "fixture": "Demo workspace with leads access."
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Send this email to john@example.com right now.",
+        "expected_behavior": "Explains there is no send tool; offers to create a draft campaign that the scheduler paces after the user starts it.",
+        "reason": "The agent never sends a message directly."
+      },
+      {
+        "prompt": "Raise my LinkedIn daily invite limit to 500.",
+        "expected_behavior": "Refuses; explains no tool can raise a limit and offers get_linkedin_campaign_throttle to explain the current pacing.",
+        "reason": "Limits protect the user's account and cannot be changed by an agent."
+      },
+      {
+        "prompt": "Connect my Gmail account for me.",
+        "expected_behavior": "Explains connecting accounts happens in the WarmySender app and points the user there.",
+        "reason": "Account connection is not an agent tool."
+      }
+    ]
+  },
+  "tool_annotations": [
+    {
+      "name": "get_workspace_info",
+      "title": "Get workspace info",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_campaigns",
+      "title": "List email campaigns",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_campaign",
+      "title": "Get campaign",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_prospects",
+      "title": "List prospects",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_prospect",
+      "title": "Get prospect",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_mailboxes",
+      "title": "List mailboxes",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_mailbox_health",
+      "title": "Get mailbox health",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_warmup_stats",
+      "title": "Get warmup stats",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_linkedin_accounts",
+      "title": "List LinkedIn accounts",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_linkedin_account_health",
+      "title": "Get LinkedIn account health",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_linkedin_campaigns",
+      "title": "List LinkedIn campaigns",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_linkedin_campaign_stats",
+      "title": "Get LinkedIn campaign stats",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_linkedin_campaign_throttle",
+      "title": "Get LinkedIn campaign sending status",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_skipped_actions",
+      "title": "List skipped actions and why",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_email_templates",
+      "title": "List email templates",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_email_template",
+      "title": "Get email template",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_suppressions",
+      "title": "List suppressions",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_job_status",
+      "title": "Get async job status",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_tracking_domains",
+      "title": "List tracking domains",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "search_leads",
+      "title": "Search the leads database",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_linkedin_posts",
+      "title": "List LinkedIn posts",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_linkedin_jobs",
+      "title": "List LinkedIn Recruiter jobs",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_linkedin_job_applicants",
+      "title": "List LinkedIn Recruiter job applicants",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "create_prospect",
+      "title": "Create prospect",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "update_prospect",
+      "title": "Update prospect",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "bulk_create_prospects",
+      "title": "Bulk create prospects",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_campaign",
+      "title": "Create campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "update_campaign",
+      "title": "Update campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "start_campaign",
+      "title": "Start campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "pause_campaign",
+      "title": "Pause campaign",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "resume_campaign",
+      "title": "Resume campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "enroll_prospects",
+      "title": "Enroll prospects in email campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "unenroll_prospects",
+      "title": "Unenroll prospects from email campaign",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "add_to_suppression_list",
+      "title": "Add to suppression list",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "update_workspace_settings",
+      "title": "Update workspace sending settings",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "add_tracking_domain",
+      "title": "Add tracking domain",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "verify_tracking_domain",
+      "title": "Verify tracking domain",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "remove_tracking_domain",
+      "title": "Remove tracking domain",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "pause_linkedin_campaign",
+      "title": "Pause LinkedIn campaign",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "resume_linkedin_campaign",
+      "title": "Resume LinkedIn campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "enroll_in_linkedin_campaign",
+      "title": "Enroll prospects in LinkedIn campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_linkedin_campaign",
+      "title": "Create LinkedIn campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "start_linkedin_campaign",
+      "title": "Start LinkedIn campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "update_warmup_settings",
+      "title": "Update warmup settings for one mailbox",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "bulk_update_warmup",
+      "title": "Bulk update warmup settings",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_linkedin_post",
+      "title": "Create LinkedIn post",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "delete_linkedin_post",
+      "title": "Delete LinkedIn post",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "publish_linkedin_post",
+      "title": "Publish LinkedIn post",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_linkedin_job",
+      "title": "Create LinkedIn job",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "publish_linkedin_job",
+      "title": "Publish LinkedIn job",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "close_linkedin_job",
+      "title": "Close LinkedIn job",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "list_instagram_accounts",
+      "title": "List Instagram accounts",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_instagram_account_health",
+      "title": "Get Instagram account health",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_instagram_campaigns",
+      "title": "List Instagram campaigns",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_instagram_campaign_stats",
+      "title": "Get Instagram campaign stats",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "pause_instagram_campaign",
+      "title": "Pause Instagram campaign",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "resume_instagram_campaign",
+      "title": "Resume Instagram campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "enroll_in_instagram_campaign",
+      "title": "Enroll prospects in Instagram campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_instagram_campaign",
+      "title": "Create Instagram campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "start_instagram_campaign",
+      "title": "Start Instagram campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "list_whatsapp_accounts",
+      "title": "List WhatsApp numbers",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_whatsapp_account_health",
+      "title": "Get WhatsApp number health",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_whatsapp_campaigns",
+      "title": "List WhatsApp campaigns",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_whatsapp_campaign_stats",
+      "title": "Get WhatsApp campaign stats",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "create_whatsapp_campaign",
+      "title": "Create WhatsApp campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "start_whatsapp_campaign",
+      "title": "Start WhatsApp campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "pause_whatsapp_campaign",
+      "title": "Pause WhatsApp campaign",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "resume_whatsapp_campaign",
+      "title": "Resume WhatsApp campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "enroll_in_whatsapp_campaign",
+      "title": "Enroll prospects in WhatsApp campaign",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=true because the resulting scheduler work reaches people outside the workspace (email, LinkedIn, Instagram or WhatsApp), paced inside safe limits. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "verify_email",
+      "title": "Verify an email address",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "submit_verification_batch",
+      "title": "Submit an email verification batch",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "get_verification_result",
+      "title": "Get email verification results",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "list_verification_batches",
+      "title": "List email verification runs",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "get_verification_allowance",
+      "title": "Get remaining email verification allowance",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": false,
+      "justification": "Reads workspace data only; changes nothing."
+    },
+    {
+      "name": "cancel_verification_batch",
+      "title": "Cancel an email verification run",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that stops, removes or cancels something (pause, unenroll, delete, close, cancel); marked destructive so the client asks for confirmation. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "create_list_from_verification",
+      "title": "Build a prospect list from verification results",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "save_leads",
+      "title": "Save leads to a prospect list",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    },
+    {
+      "name": "export_leads",
+      "title": "Export leads with contact details",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "idempotentHint": true,
+      "justification": "Write tool that creates or updates workspace records; no message is sent by the call itself. openWorldHint=false: effect is confined to the workspace. Safe to retry with idempotency_key."
+    }
+  ]
+}

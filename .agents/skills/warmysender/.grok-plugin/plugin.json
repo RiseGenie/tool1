@@ -1,0 +1,35 @@
+{
+  "name": "warmysender",
+  "version": "1.0.0",
+  "description": "WarmySender for AI agents — run cold email, email warmup, LinkedIn, Instagram and WhatsApp outreach on autopilot, verify emails and tap a 200M B2B lead database from Claude, ChatGPT, Cursor, Codex, OpenClaw, Hermes Agent or any agent that speaks MCP. The agent never sends directly and never raises a limit: WarmySender's scheduler paces every action inside safe limits.",
+  "author": {
+    "name": "WarmySender",
+    "email": "hello@warmysender.com",
+    "url": "https://warmysender.com"
+  },
+  "homepage": "https://warmysender.com/ai-agents",
+  "repository": "https://github.com/fortuneflick/warmysender-claude-plugin",
+  "license": "MIT",
+  "logo": "assets/logo.svg",
+  "keywords": [
+    "warmysender",
+    "warmysender cold email",
+    "warmysender warmup",
+    "warmysender linkedin outreach",
+    "warmysender email verification",
+    "warmysender leads"
+  ],
+  "skills": [
+    "./skills/warmysender",
+    "./skills/campaign-doctor",
+    "./skills/cold-email-launch",
+    "./skills/list-hygiene"
+  ],
+  "mcpServers": {
+    "warmysender": {
+      "type": "http",
+      "url": "https://warmysender.com/mcp",
+      "note": "Official WarmySender MCP server (hosted, streamable HTTP). Authorizes via OAuth on first connection — the agent is prompted to sign in to WarmySender; no API key or local install required. Lets the agent build, launch and manage cold email, LinkedIn, Instagram and WhatsApp campaigns, verify emails, tune warmup and read stats. It never sends a message directly; WarmySender's scheduler paces every action inside safe limits."
+    }
+  }
+}

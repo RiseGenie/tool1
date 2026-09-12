@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "warmysender": {
+      "source": "fortuneflick/warmysender-claude-plugin",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "ee33e9da4ee03850a691e72d03a593407c3db7c903f606e115064f8dbbdce7e6"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "warmysender": {
+      "type": "http",
+      "url": "https://warmysender.com/mcp"
+    }
+  }
+}
