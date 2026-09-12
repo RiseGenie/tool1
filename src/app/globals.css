@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0620;
+  --foreground: #ffffff;
+
+  /* Brand palette (from provided swatches) */
+  --c-white: #ffffff;
+  --c-orange: #ff6633;
+  --c-orange-solid: #ff9500;
+  --c-indigo: #3e1a78;
+  --c-sky: #74d9ff;
+  --c-lavender: #b385f5;
+  --c-yellow: #ffe066;
+  --c-coral: #ff7086;
+  --c-mint: #3add97;
+  --c-pink: #ff7ad9;
+  --c-lime: #ccf564;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-brand-white: var(--c-white);
+  --color-brand-orange: var(--c-orange);
+  --color-brand-orange-solid: var(--c-orange-solid);
+  --color-brand-indigo: var(--c-indigo);
+  --color-brand-sky: var(--c-sky);
+  --color-brand-lavender: var(--c-lavender);
+  --color-brand-yellow: var(--c-yellow);
+  --color-brand-coral: var(--c-coral);
+  --color-brand-mint: var(--c-mint);
+  --color-brand-pink: var(--c-pink);
+  --color-brand-lime: var(--c-lime);
+}
+
+body {
+  background:
+    radial-gradient(1200px 700px at 12% -10%, rgba(179, 133, 245, 0.35), transparent 60%),
+    radial-gradient(1000px 600px at 90% 0%, rgba(116, 217, 255, 0.25), transparent 55%),
+    radial-gradient(900px 700px at 50% 110%, rgba(255, 102, 51, 0.18), transparent 55%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  min-height: 100dvh;
+}
+
+/* ---------- Glassmorphism ---------- */
+.glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 8px 32px rgba(15, 6, 40, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 8px 24px rgba(62, 26, 120, 0.08);
+}
+
+.glass-panel {
+  border-radius: 1.25rem;
+}
+
+/* ---------- 3D glass icon shell ---------- */
+.icon-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  isolation: isolate;
+  transform-style: preserve-3d;
+}
+
+.icon-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 10px 20px -6px rgba(20, 8, 50, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    inset 0 -6px 10px rgba(0, 0, 0, 0.12);
+  z-index: -1;
+}
+
+.icon-3d::after {
+  content: "";
+  position: absolute;
+  top: 8%;
+  left: 12%;
+  width: 34%;
+  height: 22%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  filter: blur(3px);
+  opacity: 0.8;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float { animation: float-y 5s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 14s linear infinite; }
+.animate-pulse-glow { animation: pulse-glow 3.2s ease-in-out infinite; }
+
+.text-shimmer {
+  background: linear-gradient(90deg, var(--c-sky), var(--c-lavender), var(--c-pink), var(--c-sky));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 999px; }
