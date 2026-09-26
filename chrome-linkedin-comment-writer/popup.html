@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Comment Copilot</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Comment Copilot</h1>
+    <span class="subtitle">for LinkedIn</span>
+  </header>
+
+  <main>
+    <div class="status-card" id="status-card">
+      <span class="dot" id="dot"></span>
+      <span id="status-text">Checking setup…</span>
+    </div>
+
+    <p class="blurb">
+      Open a post on LinkedIn, click into the comment box, and a small
+      toolbar appears there — pick a tone and draft a comment. Nothing is
+      ever posted automatically; you always review and click LinkedIn's own
+      Comment button.
+    </p>
+
+    <button id="open-options" class="primary">Open Settings</button>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>
