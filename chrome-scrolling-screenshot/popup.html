@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Full Page Screenshot</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Full Page Screenshot</h1>
+  </header>
+
+  <main>
+    <button id="capture-full" class="primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="7" y="10" width="14" height="10" rx="2" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      Capture full page
+    </button>
+    <button id="capture-visible" class="secondary">Capture visible area only</button>
+
+    <p class="hint" id="hint">Scrolls the page, stitches every section together, then opens the result in a new tab.</p>
+  </main>
+
+  <footer>
+    <span>Shortcut: <kbd id="shortcut">Ctrl+Shift+S</kbd></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

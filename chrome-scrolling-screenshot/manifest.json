@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Full Page Scrolling Screenshot",
+  "version": "1.0.0",
+  "description": "Capture an entire scrollable web page as one long screenshot, or just the visible area, then preview, copy, or download it as a PNG.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Full Page Screenshot",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "capture-full-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Capture full page screenshot"
+    }
+  }
+}
