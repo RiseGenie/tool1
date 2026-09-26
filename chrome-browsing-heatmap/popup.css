@@ -1,0 +1,150 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  width: 300px;
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+h1 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #888;
+}
+
+main {
+  padding: 0 16px 14px;
+}
+
+.now-tracking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #666;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d1d5db;
+  flex-shrink: 0;
+}
+
+.now-tracking.active .dot {
+  background: #7c64d9;
+  box-shadow: 0 0 0 3px rgba(124, 100, 217, 0.2);
+}
+
+.total {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.total-label {
+  text-align: center;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-domain {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.row-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #eee;
+  overflow: hidden;
+}
+
+.row-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c64d9, #9b82f5);
+  border-radius: 3px;
+}
+
+.row-time {
+  font-size: 11px;
+  color: #888;
+  width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: ui-monospace, monospace;
+}
+
+.empty {
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+  margin: 0 0 14px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.primary {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primary:hover {
+  background: #2b2b2b;
+}
+
+footer {
+  border-top: 1px solid #ececec;
+  padding: 8px 16px;
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+}

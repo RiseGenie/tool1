@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Browsing Heatmap Mirror</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Browsing Heatmap Mirror</h1>
+        <p class="subtitle">A private, local-only picture of where your time on the web goes. Nothing here ever leaves your browser.</p>
+      </div>
+      <div class="header-actions">
+        <button id="export" class="ghost">Export JSON</button>
+        <button id="clear" class="ghost danger">Clear all data</button>
+      </div>
+    </header>
+
+    <section class="stats" id="stats"></section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="range-tabs" id="range-tabs">
+          <button data-range="last90" class="tab active">Last 90 days</button>
+          <button data-range="year" class="tab">This year</button>
+          <button data-range="all" class="tab">All time</button>
+        </div>
+        <div class="legend">
+          <span>Less</span>
+          <span class="legend-cell level-0"></span>
+          <span class="legend-cell level-1"></span>
+          <span class="legend-cell level-2"></span>
+          <span class="legend-cell level-3"></span>
+          <span class="legend-cell level-4"></span>
+          <span>More</span>
+        </div>
+      </div>
+      <div class="grid-scroll">
+        <div class="grid-wrap">
+          <div class="months" id="months"></div>
+          <div class="grid-body">
+            <div class="weekdays" id="weekdays"></div>
+            <div class="grid" id="grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="day-panel">
+      <div class="card-head">
+        <h2 id="day-title">Today</h2>
+        <span class="day-total" id="day-total">0m</span>
+      </div>
+      <div class="domain-list" id="domain-list"></div>
+      <p class="empty" id="day-empty">No browsing tracked on this day.</p>
+    </section>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <script src="shared.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

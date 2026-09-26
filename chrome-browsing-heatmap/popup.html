@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Browsing Heatmap Mirror</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Heatmap Mirror</h1>
+    <span class="subtitle">Today</span>
+  </header>
+
+  <main>
+    <div class="now-tracking" id="now-tracking">
+      <span class="dot"></span>
+      <span id="now-text">Not currently tracking</span>
+    </div>
+
+    <div class="total" id="total">0m</div>
+    <div class="total-label">tracked today</div>
+
+    <div class="list" id="list"></div>
+    <p class="empty" id="empty-hint">No browsing tracked yet today.</p>
+
+    <button id="open-dashboard" class="primary">Open Dashboard</button>
+  </main>
+
+  <footer>
+    <span>100% local — nothing ever leaves your browser</span>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
