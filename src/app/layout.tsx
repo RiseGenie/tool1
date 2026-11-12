@@ -1,30 +1,24 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Space_Grotesk, Space_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const grotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"], weight: ["400", "500", "700"] });
+const mono = Space_Mono({ variable: "--font-space-mono", subsets: ["latin"], weight: ["400", "700"] });
 
 export const metadata: Metadata = {
-  title: "Orbit Circle — Build your community",
+  title: "RiseGenie | Digital Marketing & Business Growth Solutions",
   description:
-    "Orbit Circle is the all-in-one community platform: discussions, courses, events, and gamified engagement in one beautiful glassmorphic space.",
+    "Grow your business with RiseGenie's GoHighLevel experts. SEO, sales funnels, CRM automation and AI systems that generate leads and increase revenue.",
+  metadataBase: new URL("https://risegenie.com"),
+  openGraph: { title: "RiseGenie | Digital Marketing & Business Growth Solutions", url: "https://risegenie.com/", siteName: "RiseGenie", type: "website" },
 };
+
+export const viewport: Viewport = { themeColor: "#35ed81" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${grotesk.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

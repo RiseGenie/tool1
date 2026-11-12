@@ -1,23 +1,32 @@
-import { Nav } from "@/components/marketing/Nav";
-import { Hero } from "@/components/marketing/Hero";
-import { Features } from "@/components/marketing/Features";
-import { HowItWorks } from "@/components/marketing/HowItWorks";
-import { Pricing } from "@/components/marketing/Pricing";
-import { Testimonials } from "@/components/marketing/Testimonials";
-import { CTA } from "@/components/marketing/CTA";
-import { Footer } from "@/components/marketing/Footer";
+import Shell from "@/components/site/Shell";
+import Nav from "@/components/site/Nav";
+import Hero from "@/components/site/Hero";
+import Marquee from "@/components/site/Marquee";
+import Services from "@/components/site/Services";
+import RoiCalc from "@/components/site/RoiCalc";
+import About from "@/components/site/About";
+import Testimonials from "@/components/site/Testimonials";
+import Team from "@/components/site/Team";
+import Tools from "@/components/site/Tools";
+import Contact from "@/components/site/Contact";
+import Footer from "@/components/site/Footer";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col">
+    <Shell>
       <Nav />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Pricing />
-      <Testimonials />
-      <CTA />
+      <main>
+        <Hero />
+        <Marquee />
+        <Services />
+        <RoiCalc />
+        <About />
+        <Testimonials />
+        <Team />
+        <Tools />
+        <Contact />
+      </main>
       <Footer />
-    </main>
+    </Shell>
   );
 }
