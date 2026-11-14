@@ -9,7 +9,7 @@ import { StatusBadge, fmtTime } from "./StatusBadge";
 
 type Item = {
   id: string; title: string; status: string; durationMs: number | null; viewCount: number; createdAt: string;
-  thumbnailUrl: string | null; transcriptStatus: string; visibility: string;
+  thumbnailUrl: string | null; transcriptStatus: string; visibility: string; fromRequest?: boolean; submitterName?: string | null;
 };
 type FolderT = { id: string; name: string; count: number };
 
@@ -129,6 +129,7 @@ export function Library() {
                       <span>{new Date(it.createdAt).toLocaleDateString()}</span>
                       <span className="inline-flex items-center gap-1"><Eye className="size-3.5" aria-hidden />{it.viewCount}<span className="sr-only"> views</span></span>
                       {it.visibility === "link" && <span>Shared</span>}
+                      {it.fromRequest && <span className="rounded-full bg-blue-50 px-2 text-blue-900">From {it.submitterName || "request"}</span>}
                     </p>
                   </div>
                 </Link>

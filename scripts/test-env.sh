@@ -16,4 +16,4 @@ npx next dev -p $PORT >/tmp/rg-test-server.log 2>&1 &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null || true; pkill -f "next-server" || true; pkill -f "next dev" || true' EXIT
 for i in $(seq 1 90); do curl -fs "http://127.0.0.1:$PORT/api/share/$(printf 'a%.0s' {1..32})" -o /dev/null -w '%{http_code}' 2>/dev/null | grep -q 404 && break; sleep 1; done
-TEST_BASE_URL="http://127.0.0.1:$PORT" npx tsx --test "${@:-tests/*.test.ts}"
+TEST_BASE_URL="http://127.0.0.1:$PORT" npx tsx --test --test-concurrency=1 "${@:-tests/*.test.ts}"

@@ -40,6 +40,31 @@ async function api<T = unknown>(path: string, init: RequestInit & { json?: unkno
 
 type Part = { idx: number; first: number; last: number; size: number };
 
+/** Where the upload talks to. Owners use the session-authenticated API; request links use token-scoped routes. */
+export type Endpoints = {
+  create: string;
+  createExtra?: Record<string, unknown>;
+  status: (id: string) => string;
+  chunkUrl: (id: string, idx: number) => string;
+  chunkComplete: (id: string, idx: number) => string;
+  finalize: (id: string) => string;
+};
+export const OWNER_ENDPOINTS: Endpoints = {
+  create: "/api/recordings",
+  status: (id) => `/api/uploads/${id}`,
+  chunkUrl: (id, i) => `/api/uploads/${id}/chunks/${i}/url`,
+  chunkComplete: (id, i) => `/api/uploads/${id}/chunks/${i}/complete`,
+  finalize: (id) => `/api/uploads/${id}/finalize`,
+};
+export const requestEndpoints = (token: string, extra: Record<string, unknown>): Endpoints => ({
+  create: `/api/r/${token}/submissions`,
+  createExtra: extra,
+  status: (id) => `/api/r/${token}/uploads/${id}/status`,
+  chunkUrl: (id, i) => `/api/r/${token}/uploads/${id}/chunks/${i}/url`,
+  chunkComplete: (id, i) => `/api/r/${token}/uploads/${id}/chunks/${i}/complete`,
+  finalize: (id) => `/api/r/${token}/uploads/${id}/finalize`,
+});
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const retryable = (e: unknown) => !(e instanceof ApiError) || e.status >= 500 || e.status === 429 || e.code === "chunk_missing";
 
@@ -63,6 +88,7 @@ export class Uploader {
     private store: LocalStore,
     private onChange: (s: UploadState) => void,
     private concurrency = 3,
+    private ep: Endpoints = OWNER_ENDPOINTS,
   ) {
     if (typeof window !== "undefined") window.addEventListener("online", this.onlineHandler);
   }
@@ -76,7 +102,7 @@ export class Uploader {
 
   /** Create (or re-attach to) the server-side recording. Idempotent. */
   async init(meta: { mimeType: string; title?: string }) {
-    const r = await this.withRetry(() => api<{ received: { idx: number; size: number }[] }>("/api/recordings", { method: "POST", json: { id: this.id, mimeType: meta.mimeType, title: meta.title } }));
+    const r = await this.withRetry(() => api<{ received: { idx: number; size: number }[] }>(this.ep.create, { method: "POST", json: { id: this.id, mimeType: meta.mimeType, title: meta.title, ...this.ep.createExtra } }));
     for (const c of r.received) this.received.set(c.idx, c.size);
     this.emit();
   }
@@ -160,7 +186,8 @@ export class Uploader {
   }
 
   private checkIdle() {
-    if (this.running === 0 && this.queue.length === 0) this.waiters.splice(0).forEach((w) => w());
+    // Idle = nothing in flight and nothing left to do. After a fatal error we stop dispatching, so in-flight work draining is enough.
+    if (this.running === 0 && (this.queue.length === 0 || this.stopped)) this.waiters.splice(0).forEach((w) => w());
   }
 
   private waitIdle() {
@@ -197,12 +224,12 @@ export class Uploader {
       try {
         const blob = new Blob(await this.store.readSlices(this.id, p.first, p.last));
         if (blob.size !== p.size) throw new ApiError(500, "Local data does not match the expected part size");
-        const { url, headers } = await api<{ url: string; headers: Record<string, string> }>(`/api/uploads/${this.id}/chunks/${p.idx}/url`, { method: "POST" });
+        const { url, headers } = await api<{ url: string; headers: Record<string, string> }>(this.ep.chunkUrl(this.id, p.idx), { method: "POST" });
         await this.put(url, headers, blob, (sent) => {
           this.inflight.set(p.idx, sent);
           this.emit();
         });
-        await api(`/api/uploads/${this.id}/chunks/${p.idx}/complete`, { method: "POST", json: { size: blob.size } });
+        await api(this.ep.chunkComplete(this.id, p.idx), { method: "POST", json: { size: blob.size } });
         this.received.set(p.idx, blob.size);
       } finally {
         this.inflight.delete(p.idx);
@@ -235,12 +262,12 @@ export class Uploader {
     const total = this.state.totalBytes!;
     for (let heal = 0; ; heal++) {
       try {
-        await this.withRetry(() => api(`/api/uploads/${this.id}/finalize`, { method: "POST", json: { chunkCount: this.parts.length, totalBytes: total } }));
+        await this.withRetry(() => api(this.ep.finalize(this.id), { method: "POST", json: { chunkCount: this.parts.length, totalBytes: total } }));
         break;
       } catch (e) {
         // The server is missing something we thought we sent (e.g. storage lost an object): re-sync and re-send.
         if (e instanceof ApiError && (e.code === "chunks_missing" || e.code === "size_mismatch") && heal < 3) {
-          const s = await api<{ received: { idx: number; size: number }[] }>(`/api/uploads/${this.id}`);
+          const s = await api<{ received: { idx: number; size: number }[] }>(this.ep.status(this.id));
           this.received.clear();
           s.received.forEach((c) => this.received.set(c.idx, c.size));
           for (const p of this.parts) if (this.received.get(p.idx) !== p.size) this.enqueue(p);

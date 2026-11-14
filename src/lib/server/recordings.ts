@@ -41,6 +41,10 @@ export type Recording = {
   parent_version_id: string | null;
   version_label: string | null;
   redactions: unknown;
+  request_id: string | null;
+  submitter_name: string | null;
+  submitter_email: string | null;
+  submission_kind: string | null;
 };
 
 export const MEDIA_TTL_SEC = Number(process.env.MEDIA_URL_TTL_SEC || 300);
@@ -141,6 +145,8 @@ export function publicRecording(rec: Recording) {
     locked: !!rec.locked_at,
     versionLabel: rec.version_label,
     redactions: normalizeRedactions(rec.redactions),
+    submitterName: rec.submitter_name,
+    fromRequest: !!rec.request_id,
   };
 }
 

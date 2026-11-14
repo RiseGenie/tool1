@@ -33,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link href="/app" className="rounded-lg"><Logo /></Link>
           <nav aria-label="Main" className="ml-4 hidden gap-1 sm:flex">
             <Link href="/app" className="rounded-lg px-3 py-1.5 text-sm font-semibold hover:bg-slate-100">Library</Link>
+            <Link href="/app/requests" className="rounded-lg px-3 py-1.5 text-sm font-semibold hover:bg-slate-100">Requests</Link>
           </nav>
           <div className="flex-1" />
           <Link href="/app/record" className="rg-btn rg-btn-primary">
