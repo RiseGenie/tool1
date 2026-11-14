@@ -87,3 +87,37 @@ body {
   25% { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(1); opacity: 0.85; }
 }
+
+/* ---------- RiseGenie Recorder app (scoped; the marketing site above is untouched) ---------- */
+.rg-app {
+  --rg-bg: #f7f7fb;
+  --rg-surface: #ffffff;
+  --rg-ink: #14142b;
+  --rg-muted: #5b5b73;
+  --rg-line: #e3e3ee;
+  --rg-ok: #0f7b4f;
+  --rg-warn: #9a5b00;
+  --rg-bad: #b3261e;
+  background: var(--rg-bg);
+  color: var(--rg-ink);
+  color-scheme: light;
+  min-height: 100dvh;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+}
+.rg-app :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.rg-app button, .rg-app a { -webkit-tap-highlight-color: transparent; }
+.rg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.5rem;
+  padding: .5rem 1rem; border-radius: .75rem; font-weight: 600; font-size: .9rem; border: 1px solid var(--rg-line);
+  background: var(--rg-surface); color: var(--rg-ink); cursor: pointer; transition: background .15s, border-color .15s;
+}
+.rg-btn:hover { background: #f1f1f8; }
+.rg-btn:disabled { opacity: .5; cursor: not-allowed; }
+.rg-btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rg-btn-primary:hover { background: color-mix(in srgb, var(--brand) 88%, black); }
+.rg-btn-danger { color: var(--rg-bad); }
+.rg-card { background: var(--rg-surface); border: 1px solid var(--rg-line); border-radius: 1rem; }
+.rg-input {
+  width: 100%; min-height: 2.5rem; padding: .5rem .75rem; border-radius: .65rem; border: 1px solid #c9c9dc; background: #fff; color: var(--rg-ink);
+}
+@media (prefers-reduced-motion: reduce) { .rg-app * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

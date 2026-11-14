@@ -83,8 +83,8 @@ export const GET = handle(async (req: Request) => {
     matches = {};
     for (const x of m) {
       if (x.start_ms < x.trim_start_ms || (x.trim_end_ms !== null && x.start_ms > x.trim_end_ms)) continue;
-      (matches[x.recording_id] ||= []).length < 3 &&
-        matches[x.recording_id].push({ startMs: x.start_ms - x.trim_start_ms, text: x.text });
+      const list = (matches[x.recording_id] ||= []);
+      if (list.length < 3) list.push({ startMs: x.start_ms - x.trim_start_ms, text: x.text });
     }
   }
   const folders = await query(

@@ -12,7 +12,8 @@ export function run(cmd: string, args: string[], opts: { timeoutMs?: number } = 
     p.on("error", reject);
     p.on("close", (code) => {
       if (t) clearTimeout(t);
-      code === 0 ? resolve({ stdout: out, stderr: err }) : reject(new Error(`${cmd} exited ${code}: ${err.slice(-1500)}`));
+      if (code === 0) resolve({ stdout: out, stderr: err });
+      else reject(new Error(`${cmd} exited ${code}: ${err.slice(-1500)}`));
     });
   });
 }
