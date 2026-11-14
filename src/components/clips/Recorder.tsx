@@ -15,7 +15,7 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/clips/cn";
 import { formatDuration } from "@/lib/clips/format";
 import { newId, saveClip } from "@/lib/clips/store";
 import {

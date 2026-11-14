@@ -17,7 +17,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/clips/cn";
 import { deleteClip, getClip, newId, updateClip, type ClipMeta } from "@/lib/clips/store";
 import { extensionFor, formatBytes, formatDuration, timeAgo } from "@/lib/clips/format";
 
