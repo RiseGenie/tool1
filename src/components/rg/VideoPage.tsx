@@ -9,11 +9,14 @@ import { Player, type Media, type PlayerHandle } from "./Player";
 import { Transcript, type Segment } from "./Transcript";
 import { Comments, type CommentT } from "./Comments";
 import { StatusBadge, fmtBytes, fmtTime } from "./StatusBadge";
+import { VersionsPanel } from "./VersionsPanel";
+import { BlurPreview, PrivacyPanel, type RawSeg, type Redactions } from "./PrivacyPanel";
 
 type Rec = {
   id: string; title: string; status: string; failureReason: string | null; visibility: "private" | "link"; folderId: string | null;
   durationMs: number | null; sourceDurationMs: number | null; trimStartMs: number; trimEndMs: number | null; thumbnailAtMs: number | null;
   transcriptStatus: string; viewCount: number; sizeBytes: number | null; createdAt: string; revision: number;
+  versionNo: number; isDraft: boolean; locked: boolean; versionLabel: string | null; redactions: Redactions;
 };
 type Link_ = { id: string; allowDownload: boolean; allowComments: boolean; createdAt: string; revokedAt: string | null; url: string | null };
 
@@ -24,6 +27,7 @@ export function VideoPage({ id }: { id: string }) {
   const [links, setLinks] = useState<Link_[]>([]);
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [rawSegs, setRawSegs] = useState<RawSeg[]>([]);
   const [comments, setComments] = useState<CommentT[]>([]);
   const [title, setTitle] = useState("");
   const [ms, setMs] = useState(0);
@@ -61,8 +65,9 @@ export function VideoPage({ id }: { id: string }) {
   }, [working, load]);
 
   const getMedia = useCallback(async (): Promise<Media> => {
-    const r = await jfetch<Media & { transcript: Segment[] }>(`/api/recordings/${id}/media`);
+    const r = await jfetch<Media & { transcript: Segment[]; transcriptRaw: RawSeg[] }>(`/api/recordings/${id}/media`);
     setSegments(r.transcript);
+    setRawSegs(r.transcriptRaw);
     return r;
   }, [id]);
 
@@ -98,6 +103,7 @@ export function VideoPage({ id }: { id: string }) {
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-4">
           {playable ? (
+            <div className="relative">
             <Player
               key={rec.revision}
               ref={player}
@@ -105,6 +111,8 @@ export function VideoPage({ id }: { id: string }) {
               captionsUrl={rec.transcriptStatus === "ready" ? `/api/recordings/${id}/captions` : null}
               onTime={setMs}
             />
+            <BlurPreview blurs={rec.redactions.blurs} sourceMs={ms + rec.trimStartMs} />
+            </div>
           ) : (
             <div className="grid aspect-video place-items-center rounded-2xl bg-[#14142b] p-6 text-center text-white" role="status">
               <div>
@@ -135,6 +143,7 @@ export function VideoPage({ id }: { id: string }) {
                 maxLength={200}
               />
             </label>
+            {rec.versionNo > 1 || rec.isDraft ? <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold">v{rec.versionNo}{rec.isDraft ? " · Draft" : ""}</span> : null}
             <StatusBadge status={rec.status} />
           </div>
           <p className="flex flex-wrap gap-x-4 px-2 text-sm text-[color:var(--rg-muted)]">
@@ -164,6 +173,7 @@ export function VideoPage({ id }: { id: string }) {
                 onSeek={(t) => { player.current?.seek(t); player.current?.play(); }}
                 onSubmit={async (c) => { await jfetch(`/api/recordings/${id}/comments`, { method: "POST", json: c }); await load(); }}
                 onDelete={async (cid) => { await jfetch(`/api/recordings/${id}/comments/${cid}`, { method: "DELETE" }); await load(); }}
+                onResolve={async (cid, resolved) => { await jfetch(`/api/recordings/${id}/comments/${cid}`, { method: "PATCH", json: { resolved } }); await load(); }}
               />
             )}
             {rec.transcriptStatus === "failed" && <button className="rg-btn mt-3" onClick={async () => { await jfetch(`/api/recordings/${id}/retry`, { method: "POST" }); void load(); }}>Retry transcript</button>}
@@ -171,7 +181,9 @@ export function VideoPage({ id }: { id: string }) {
         </div>
 
         <aside className="space-y-4">
-          <SharePanel rec={rec} links={links} activeCount={activeLinks.length} reload={load} patch={patch} />
+          <VersionsPanel id={id} ready={rec.status === "ready"} isDraft={rec.isDraft} locked={rec.locked} onChange={load} />
+          {rec.isDraft ? <div className="rg-card p-4 text-sm"><h2 className="font-semibold">Share</h2><p className="mt-1 text-[color:var(--rg-muted)]">Publish this draft to share it. Links use the current published version.</p></div> : <SharePanel rec={rec} links={links} activeCount={activeLinks.length} reload={load} patch={patch} />}
+          <PrivacyPanel key={rec.revision + String(rec.locked)} value={rec.redactions} rawSegments={rawSegs} playheadSourceMs={ms + rec.trimStartMs} sourceDurationMs={rec.sourceDurationMs ?? 0} disabled={rec.status !== "ready" || rec.locked} onSave={async (r) => patch({ redactions: r }, "Privacy edits saved. Rendering sanitized version…")} />
           <TrimPanel rec={rec} playheadMs={ms} patch={patch} />
           <div className="rg-card space-y-3 p-4">
             <h2 className="font-semibold">Details</h2>
@@ -258,14 +270,14 @@ function TrimPanel({ rec, playheadMs, patch }: { rec: Rec; playheadMs: number; p
     setStart(rec.trimStartMs);
     setEnd(rec.trimEndMs ?? rec.sourceDurationMs ?? 0);
   }, [rec.trimStartMs, rec.trimEndMs, rec.sourceDurationMs]);
-  const ready = rec.status === "ready" && src > 0;
+  const ready = rec.status === "ready" && src > 0 && !rec.locked;
   const dirty = start !== rec.trimStartMs || end !== (rec.trimEndMs ?? src);
   const valid = end - start >= 500 && start >= 0 && end <= src;
 
   return (
     <div className="rg-card space-y-3 p-4">
       <h2 className="flex items-center gap-2 font-semibold"><Scissors className="size-4" aria-hidden />Trim &amp; thumbnail</h2>
-      {!ready ? <p className="text-sm text-[color:var(--rg-muted)]">Available once processing finishes.</p> : (
+      {!ready ? <p className="text-sm text-[color:var(--rg-muted)]">Available once processing finishes, and not after a review decision locks this version.</p> : (
         <>
           <p className="text-sm text-[color:var(--rg-muted)]">Original length {fmtTime(src)}. Trimming is non-destructive and re-renders the video; viewers see “processing” until it’s done.</p>
           <div>

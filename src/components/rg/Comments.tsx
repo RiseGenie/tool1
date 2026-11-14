@@ -7,11 +7,13 @@ import { fmtTime } from "./StatusBadge";
 export type CommentT = {
   id: string; parentId: string | null; atMs: number; outsideTrim: boolean; body: string; createdAt: string;
   author: { name: string; verified: boolean; isOwner: boolean };
+  kind?: "comment" | "change_request";
+  resolved?: boolean;
 };
 
 /** Timestamped, threaded comments. Guests give a display name (marked unverified); signed-in users are marked verified. */
 export function Comments({
-  comments, allowed, signedIn, currentMs, onSeek, onSubmit, onDelete,
+  comments, allowed, signedIn, currentMs, onSeek, onSubmit, onDelete, onResolve,
 }: {
   comments: CommentT[];
   allowed: boolean;
@@ -20,6 +22,7 @@ export function Comments({
   onSeek: (ms: number) => void;
   onSubmit: (input: { atMs: number; body: string; parentId?: string; guestName?: string }) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  onResolve?: (id: string, resolved: boolean) => Promise<void>;
 }) {
   const [body, setBody] = useState("");
   const [name, setName] = useState(() => {
@@ -62,6 +65,12 @@ export function Comments({
           <span className="inline-flex items-center gap-0.5 text-xs text-[color:var(--rg-ok)]" title="Signed-in account"><BadgeCheck className="size-3.5" aria-hidden />{c.author.isOwner ? "Owner" : "Verified"}</span>
         ) : (
           <span className="text-xs text-[color:var(--rg-muted)]" title="Guests enter their own name; it isn’t verified">Guest</span>
+        )}
+        {c.kind === "change_request" && (
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.resolved ? "bg-emerald-50 text-emerald-900" : "bg-amber-100 text-amber-900"}`}>{c.resolved ? "Change resolved" : "Change requested"}</span>
+        )}
+        {onResolve && c.kind === "change_request" && (
+          <button onClick={() => void onResolve(c.id, !c.resolved)} className="min-h-8 text-xs font-semibold text-[color:var(--brand)]">{c.resolved ? "Reopen" : "Mark resolved"}</button>
         )}
         {c.outsideTrim && <span className="text-xs text-[color:var(--rg-warn)]">(outside trimmed range)</span>}
         <time className="text-xs text-[color:var(--rg-muted)]" dateTime={c.createdAt}>{new Date(c.createdAt).toLocaleString()}</time>

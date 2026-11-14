@@ -16,4 +16,4 @@ npx tsx worker/index.ts >/tmp/rg-e2e-worker.log 2>&1 & WORKER=$!
 trap 'kill $SERVER $WORKER 2>/dev/null || true; pkill -f "next-server" || true; pkill -f "next dev" || true' EXIT
 for i in $(seq 1 90); do curl -fs -o /dev/null "http://127.0.0.1:3200/login" && break; sleep 1; done
 curl -fs -o /dev/null "http://127.0.0.1:3200/app/record" -b "x=1" || true   # warm the compile
-node tests/e2e/acceptance.mjs
+node tests/e2e/${E2E_ONLY:-acceptance}.mjs

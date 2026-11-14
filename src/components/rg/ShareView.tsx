@@ -7,6 +7,7 @@ import { Logo } from "./Logo";
 import { Player, type Media, type PlayerHandle } from "./Player";
 import { Transcript, type Segment } from "./Transcript";
 import { Comments, type CommentT } from "./Comments";
+import { GuestReview } from "./GuestReview";
 
 type Meta = { playable: boolean; status: string; transcriptStatus: string; durationMs: number | null; allowDownload: boolean; allowComments: boolean; revision: number };
 
@@ -123,6 +124,8 @@ export function ShareView({ token, title, allowDownload, allowComments, signedIn
           </div>
         </div>
 
+        <div>
+        {meta?.playable && allowed && <GuestReview token={token} signedIn={signedIn} version={meta.revision} currentMs={() => player.current?.currentMs() ?? 0} onDone={() => void loadComments()} />}
         <section className="rg-card p-4" aria-label="Transcript and comments">
           <div role="tablist" aria-label="Comments and transcript" className="mb-3 flex gap-1">
             {(["comments", "transcript"] as const).map((t) => (
@@ -144,6 +147,7 @@ export function ShareView({ token, title, allowDownload, allowComments, signedIn
             />
           )}
         </section>
+        </div>
       </main>
     </div>
   );

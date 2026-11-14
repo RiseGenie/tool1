@@ -4,6 +4,7 @@ import { one, query } from "./db";
 import { forbidden, notFound } from "./http";
 import { getStorage } from "./storage";
 import { decrypt, sha256 } from "./tokens";
+import { normalizeRedactions } from "./redactions";
 
 export type Recording = {
   id: string;
@@ -33,6 +34,13 @@ export type Recording = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  series_id: string;
+  version_no: number;
+  is_draft: boolean;
+  locked_at: string | null;
+  parent_version_id: string | null;
+  version_label: string | null;
+  redactions: unknown;
 };
 
 export const MEDIA_TTL_SEC = Number(process.env.MEDIA_URL_TTL_SEC || 300);
@@ -63,7 +71,12 @@ export async function resolveShare(token: string): Promise<{ link: ShareLink; re
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) throw notFound();
   const link = await one<ShareLink>(`select * from share_links where token_hash = $1`, [sha256(token)]);
   if (!link || link.revoked_at) throw notFound();
-  const rec = await one<Recording>(`select * from recordings where id = $1 and deleted_at is null`, [link.recording_id]);
+  // A link belongs to a series of versions and always serves the newest PUBLISHED one — never a draft, never an older version.
+  const rec = await one<Recording>(
+    `select c.* from recordings b join recordings c on c.series_id = b.series_id
+      where b.id = $1 and not c.is_draft and c.deleted_at is null order by c.version_no desc limit 1`,
+    [link.recording_id],
+  );
   if (!rec || rec.visibility !== "link") throw notFound();
   return { link, rec };
 }
@@ -122,16 +135,24 @@ export function publicRecording(rec: Recording) {
     createdAt: rec.created_at,
     updatedAt: rec.updated_at,
     revision: rec.revision,
+    seriesId: rec.series_id,
+    versionNo: rec.version_no,
+    isDraft: rec.is_draft,
+    locked: !!rec.locked_at,
+    versionLabel: rec.version_label,
+    redactions: normalizeRedactions(rec.redactions),
   };
 }
 
-export async function transcriptFor(rec: Recording, q?: string) {
+/** Transcript on the EDITED timeline. Redactions are applied unless `raw` (owner editor only). */
+export async function transcriptFor(rec: Recording, q?: string, opts: { raw?: boolean } = {}) {
   const rows = await query<{ idx: number; start_ms: number; end_ms: number; text: string }>(
     `select idx, start_ms, end_ms, text from transcript_segments where recording_id = $1 order by idx`,
     [rec.id],
   );
   const { mapSegments } = await import("./timeline");
-  let segs = mapSegments(rows, rec);
+  const { redactSegments } = await import("./redactions");
+  let segs = mapSegments(opts.raw ? rows : redactSegments(rows, normalizeRedactions(rec.redactions)), rec);
   if (q?.trim()) {
     const needle = q.trim().toLowerCase();
     segs = segs.filter((s) => s.text.toLowerCase().includes(needle));

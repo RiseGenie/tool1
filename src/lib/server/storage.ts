@@ -3,6 +3,7 @@ import { dirname, join, normalize } from "node:path";
 import { pipeline } from "node:stream/promises";
 import type { Readable } from "node:stream";
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -32,6 +33,9 @@ export interface Storage {
   downloadTo(key: string, path: string): Promise<void>;
   uploadFrom(path: string, key: string, contentType: string): Promise<void>;
   readStream(key: string): Promise<Readable>;
+  copy(from: string, to: string): Promise<void>;
+  /** Read a byte range (inclusive start, exclusive end). */
+  readRange(key: string, start: number, end: number): Promise<Buffer>;
 }
 
 // ---------- filesystem driver (dev/tests) ----------
@@ -81,6 +85,21 @@ function fsDriver(): Storage & { pathFor(key: string): string } {
     },
     async readStream(key) {
       return createReadStream(pathFor(key));
+    },
+    async copy(from, to) {
+      const dest = pathFor(to);
+      await fs.mkdir(dirname(dest), { recursive: true });
+      await fs.copyFile(pathFor(from), dest);
+    },
+    async readRange(key, start, end) {
+      const fh = await fs.open(pathFor(key), "r");
+      try {
+        const buf = Buffer.alloc(end - start);
+        const { bytesRead } = await fh.read(buf, 0, end - start, start);
+        return buf.subarray(0, bytesRead);
+      } finally {
+        await fh.close();
+      }
     },
   };
 }
@@ -160,6 +179,15 @@ function s3Driver(): Storage {
     async readStream(key) {
       const r = await client.send(new GetObjectCommand({ Bucket: c.bucket, Key: key }));
       return r.Body as Readable;
+    },
+    async copy(from, to) {
+      assertKey(from);
+      assertKey(to);
+      await client.send(new CopyObjectCommand({ Bucket: c.bucket, Key: to, CopySource: `${c.bucket}/${from}` }));
+    },
+    async readRange(key, start, end) {
+      const r = await client.send(new GetObjectCommand({ Bucket: c.bucket, Key: key, Range: `bytes=${start}-${end - 1}` }));
+      return Buffer.from(await (r.Body as { transformToByteArray(): Promise<Uint8Array> }).transformToByteArray());
     },
   };
 }

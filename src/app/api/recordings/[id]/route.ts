@@ -5,6 +5,7 @@ import { handle, HttpError } from "@/lib/server/http";
 import { requireSession } from "@/lib/server/auth";
 import { getOwned, publicRecording, type Recording } from "@/lib/server/recordings";
 import { enqueue } from "@/lib/server/jobs";
+import { needsRender, normalizeRedactions, redactionsSchema } from "@/lib/server/redactions";
 import { getStorage } from "@/lib/server/storage";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,6 +17,7 @@ const patchSchema = z.object({
   trimStartMs: z.number().int().min(0).optional(),
   trimEndMs: z.number().int().min(1).nullable().optional(),
   thumbnailAtMs: z.number().int().min(0).nullable().optional(),
+  redactions: redactionsSchema.optional(),
 });
 
 export const GET = handle(async (_req: Request, { params }: Ctx) => {
@@ -52,6 +54,19 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
     let rerender = false;
     let thumbOnly = false;
     const trimChanged = body.trimStartMs !== undefined || body.trimEndMs !== undefined;
+    const contentEdit = trimChanged || body.redactions !== undefined;
+    if (contentEdit && rec.locked_at)
+      throw new HttpError(409, "This version has been reviewed and is locked. Create a new version to change it.", "version_locked");
+    if (body.redactions !== undefined) {
+      const old = normalizeRedactions(rec.redactions);
+      if (rec.source_duration_ms && [...body.redactions.blurs, ...body.redactions.mutes].some((r) => r.endMs > rec.source_duration_ms! + 250))
+        throw new HttpError(400, "A redaction extends past the end of the recording");
+      set("redactions", JSON.stringify(body.redactions));
+      if (needsRender(old, body.redactions)) {
+        if (!rec.source_duration_ms) throw new HttpError(409, "Editing is available once processing finishes");
+        rerender = true;
+      }
+    }
     if (trimChanged) {
       if (!rec.source_duration_ms) throw new HttpError(409, "Trimming is available once processing finishes");
       const start = body.trimStartMs ?? rec.trim_start_ms;
@@ -92,7 +107,10 @@ export const DELETE = handle(async (_req: Request, { params }: Ctx) => {
   const chunkRows = await query<{ idx: number }>(`select idx from upload_chunks where upload_id=$1`, [rec.id]);
   const { keys } = await import("@/lib/server/storage");
   const objs = [rec.source_key, rec.playback_key, rec.thumbnail_key, ...chunkRows.map((c) => keys.chunk(rec.id, c.idx))].filter(Boolean) as string[];
-  await query(`delete from recordings where id=$1`, [rec.id]); // cascades links, comments, transcript, jobs, uploads
+  // If other versions survive, keep the series' share links alive by re-pointing them before the cascade.
+  const survivor = await query<{ id: string }>(`select id from recordings where series_id=$1 and id<>$2 and deleted_at is null order by version_no desc limit 1`, [rec.series_id, rec.id]);
+  if (survivor[0]) await query(`update share_links set recording_id=$1 where recording_id=$2`, [survivor[0].id, rec.id]);
+  await query(`delete from recordings where id=$1`, [rec.id]); // cascades comments, transcript, decisions, jobs, uploads
   await Promise.allSettled(objs.map((k) => st.remove(k)));
   return NextResponse.json({ ok: true });
 });

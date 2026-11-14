@@ -6,13 +6,13 @@ import { editToSource, mapPoint } from "./timeline";
 
 type Row = {
   id: string; parent_id: string | null; author_id: string | null; guest_name: string | null; author_name: string | null;
-  author_email: string | null; at_source_ms: number; body: string; created_at: string;
+  author_email: string | null; at_source_ms: number; body: string; created_at: string; kind: string; resolved_at: string | null;
 };
 
 export async function listComments(rec: Recording) {
   const rows = await query<Row>(
     `select c.id, c.parent_id, c.author_id, c.guest_name, u.name as author_name, u.email as author_email,
-            c.at_source_ms, c.body, c.created_at
+            c.at_source_ms, c.body, c.created_at, c.kind, c.resolved_at
        from comments c left join users u on u.id = c.author_id
       where c.recording_id = $1 and c.deleted_at is null order by c.created_at`,
     [rec.id],
@@ -26,6 +26,8 @@ export async function listComments(rec: Recording) {
       outsideTrim: p.outside,
       body: r.body,
       createdAt: r.created_at,
+      kind: r.kind as "comment" | "change_request",
+      resolved: !!r.resolved_at,
       author: {
         name: r.author_id ? r.author_name || r.author_email?.split("@")[0] || "Member" : r.guest_name || "Guest",
         verified: !!r.author_id, // signed-in account; guest names are self-declared and unverified

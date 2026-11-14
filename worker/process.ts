@@ -9,11 +9,12 @@ import { getStorage, keys } from "../src/lib/server/storage";
 import { env } from "../src/lib/server/env";
 import { extractAudioPieces, extractThumbnail, measureDurationMs, probe, transcodeToMp4 } from "./ffmpeg";
 import { getTranscriber } from "./transcribe";
+import { normalizeRedactions } from "../src/lib/server/redactions";
 
 type Rec = {
   id: string; revision: number; mime_type: string | null; source_key: string | null; source_duration_ms: number | null;
   trim_start_ms: number; trim_end_ms: number | null; thumbnail_at_ms: number | null; playback_key: string | null;
-  transcript_status: string; has_audio: boolean | null; duration_ms: number | null;
+  transcript_status: string; has_audio: boolean | null; duration_ms: number | null; redactions: unknown;
 };
 
 const ext = (mime: string | null) => (mime?.includes("mp4") ? "mp4" : mime?.includes("matroska") ? "mkv" : "webm");
@@ -88,7 +89,14 @@ export async function processJob(job: Job): Promise<void> {
     const start = Math.min(rec.trim_start_ms, Math.max(0, sourceMs - 500));
     const end = rec.trim_end_ms !== null ? Math.min(rec.trim_end_ms, sourceMs) : null;
     const play = join(dir, "playback.mp4");
-    await transcodeToMp4({ src, out: play, startMs: start, endMs: end, hasAudio: meta.hasAudio });
+    // Privacy edits are stored on the source timeline; map them onto the trimmed output timeline.
+    const red = normalizeRedactions(rec.redactions);
+    const outLen = ((end ?? sourceMs) - start) / 1000;
+    const shift = (ms: number) => Math.max(0, (ms - start) / 1000);
+    const live = <T extends { startMs: number; endMs: number }>(r: T) => r.endMs > start && (end === null || r.startMs < end) && shift(r.startMs) < outLen;
+    const blurs = red.blurs.filter(live).map((b) => ({ x: b.x, y: b.y, w: b.w, h: b.h, s: shift(b.startMs), e: shift(b.endMs) }));
+    const mutes = red.mutes.filter(live).map((m) => ({ s: shift(m.startMs), e: shift(m.endMs) }));
+    await transcodeToMp4({ src, out: play, startMs: start, endMs: end, hasAudio: meta.hasAudio, blurs, mutes });
     const out = await probe(play);
     if (!out.durationMs) throw new Error("Processed video has no duration");
 

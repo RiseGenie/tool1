@@ -49,7 +49,7 @@ export const GET = handle(async (req: Request) => {
   const folder = url.searchParams.get("folder") || "all";
   const q = (url.searchParams.get("q") || "").trim().slice(0, 100);
   const params: unknown[] = [s.userId];
-  let where = `r.owner_id = $1 and r.deleted_at is null`;
+  let where = `r.owner_id = $1 and r.deleted_at is null and r.id = (select x.id from recordings x where x.series_id = r.series_id and x.deleted_at is null order by x.version_no desc limit 1)`;
   if (folder === "root") where += ` and r.folder_id is null`;
   else if (folder !== "all") {
     if (!/^[0-9a-f-]{36}$/.test(folder)) throw new HttpError(400, "Bad folder");

@@ -12,8 +12,10 @@ export const GET = handle(async (_req: Request, { params }: Ctx) => {
   if (!rec.playback_key) throw new HttpError(409, "Not playable yet");
   const urls = await mediaUrls(rec);
   const transcript = await transcriptFor(rec);
+  const raw = await transcriptFor(rec, undefined, { raw: true }); // owner-only: the editor needs the unredacted text
   return NextResponse.json({
     ...urls,
     transcript: transcript.map((t) => ({ startMs: t.start_ms, endMs: t.end_ms, text: t.text })),
+    transcriptRaw: raw.map((t) => ({ idx: t.idx, startMs: t.start_ms, endMs: t.end_ms, text: t.text, sourceStartMs: t.start_ms + rec.trim_start_ms })),
   });
 });
