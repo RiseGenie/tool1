@@ -143,7 +143,7 @@ try {
     const d = info.recording.durationMs;
     expect(d > 5000 && d < 14000, `unexpected duration ${d}`);
     await rec.getByRole("tab", { name: /transcript/i }).click();
-    await rec.getByText("Welcome to the RiseGenie walkthrough").waitFor({ timeout: 60000 });
+    await rec.getByRole("button", { name: /Welcome to the RiseGenie walkthrough/ }).first().waitFor({ timeout: 60000 });
     await rec.screenshot({ path: `${OUT}/4-ready.png` });
     return `duration ${(d / 1000).toFixed(1)}s; ` + (await axeScan(rec, "video page a11y"));
   });

@@ -38,3 +38,11 @@ phone emulation = Chromium with the Pixel 7 profile (touch, 412×915, mobile UA)
 * Camera and microphone indicators are controlled by the OS/browser.
 * Tab/system audio availability depends on browser, OS and which surface the user picks. The app says so in the UI when none was shared.
 * Background tabs: compositing is driven by a Web Worker timer so the camera bubble keeps rendering while the user presents another tab. Observed working in Chromium.
+
+## Phase 2 additions (observed, Chromium only)
+| Capability | Chromium 153 desktop | Chromium, Pixel 7 emulation |
+|---|---|---|
+| Client review page: request changes / approve, history | ✅ | ✅ |
+| Guest request page: file upload (MP4), content rejection, camera reply (fake device) | — | ✅ |
+| Privacy panel, SOP editor, bug report form (axe: 0 serious/critical) | ✅ | — |
+| Guest screen recording from the request page (picker) | ◐ code shared with the main recorder; not separately exercised | not tested |

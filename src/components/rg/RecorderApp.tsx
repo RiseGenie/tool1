@@ -355,7 +355,8 @@ export function RecorderApp() {
     await store.current?.markStopped(id, durationMs).catch(() => {});
     try {
       await uploader.current!.finish();
-      router.push(`/app/v/${id}`);
+      const bug = new URLSearchParams(location.search).get("bug");
+      router.push(bug && /^[0-9a-f-]{36}$/.test(bug) ? `/app/bug/${bug}?attach=${id}` : `/app/v/${id}`);
     } catch (err) {
       setError((err as Error).message || "Upload failed");
       setPhase("failed");

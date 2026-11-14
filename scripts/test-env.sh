@@ -9,6 +9,7 @@ run "$PSQL -h /tmp -p 54329 -U rg -d postgres -qc 'drop database if exists rgtes
 npx tsx scripts/migrate.ts >/dev/null
 export FS_STORAGE_DIR=/tmp/rg-test-storage; rm -rf "$FS_STORAGE_DIR"
 export STORAGE_DRIVER=fs TRANSCRIBE_PROVIDER=mock APP_SECRET=test-secret DEV_AUTH=1
+export BUG_TRACKER=github GITHUB_TOKEN=test-token GITHUB_REPO=acme/app GITHUB_API_URL=http://127.0.0.1:3299
 PORT=3200
 pkill -f "next dev" 2>/dev/null || true; pkill -f "next-server" 2>/dev/null || true; sleep 1
 # Dev auth is hard-disabled when NODE_ENV=production, so the test server runs in development mode.

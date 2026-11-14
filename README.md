@@ -10,9 +10,16 @@ Name, logo and colours are configurable (`NEXT_PUBLIC_BRAND_*`). Built on Next.j
 | Phase | Scope | State |
 |---|---|---|
 | 1 | Record, edit, share, watch, comments, library | **Built and tested** (see Testing) |
-| 2 | Client approvals, privacy editing, SOPs, video requests, bug reports | Not started — not in the navigation |
+| 2 | Client approvals, privacy editing, SOPs, video requests, bug reports | **Built and tested** except the live-service items listed below |
 | 3 | Workspaces, HighLevel, distribution, analytics, admin | Not started |
 | 4 | Advanced recording/editing/AI | Not started |
+
+### Phase 2 features
+* **Versions & client review.** A share link serves a *series* of versions and always shows the newest **published** one. “Create replacement version” makes an unpublished **draft** (copy of the original upload, trim, redactions, transcript) that the author edits and publishes; guests never see drafts. Clients **Approve** or **Request changes** (optionally at a video timestamp, which also creates a change-request comment the author can resolve). A decision is stored against that exact version and render revision, **freezes that version** (edits return 409 `version_locked`), and never carries over: a replacement starts a new review while earlier decisions stay visible in the history. Reviewer identity: signed-in = verified; guest name/email = self-declared (email is never shown to other guests).
+* **Privacy editing.** Region blur over a time range, audio mute ranges, and transcript redaction (phrases, whole lines; lines overlapping a mute are redacted automatically). Blurs/mutes are baked into a **sanitized MP4** by the worker; captions, the guest transcript API, guest search, thumbnails, SOP input and downloads all come from the sanitized version. Saving withdraws the stale unredacted playback immediately. Redaction times are on the original timeline, so they survive re-trimming.
+* **SOPs.** “Open SOP” on a ready version drafts numbered steps from that version’s **sanitized** transcript with a screenshot (from the sanitized video) and a deep link per step. Steps reference transcript segment indexes, never free-form timestamps, so every step points at a real moment (invalid references from an AI generator are dropped). `SOP_PROVIDER=outline` needs no AI; `openai` uses any OpenAI-compatible chat API. Edit titles/instructions/times (a time change re-takes the screenshot), add, delete, reorder, regenerate. **Export (Markdown, or Docs-ready HTML) is blocked until the author marks the SOP reviewed; any edit clears that.** Exports are self-contained (screenshots inlined).
+* **Video requests.** `/app/requests` creates expiring links (1–90 days, max responses, which of *record screen / video reply / upload* are allowed, destination folder). Guests need no account. Responses are always routed to the request owner, folder and request; they can’t choose or read anything else. Controls: per-IP rate limit, response cap enforced under concurrency, size cap, content-sniffed container check (a rejected submission is deleted and frees its slot), 1-hour grace for uploads already in progress at expiry, abandoned uploads stop counting after 1 h and are swept after 24 h.
+* **Bug reports.** `/app/bug`: title, severity, steps, expected/actual, an attached (or newly recorded) recording, up to 5 content-validated files (images, PDF, plain-text logs; ≤ 10 MB), and **diagnostics you tick** (browser, OS, window size, …; the server keeps only allow-listed keys). The preview is the exact payload; Submit needs explicit confirmation, claims the report atomically (a double click or retry never files two issues) and reports tracker failures with a safe retry. A viewing link is included only if opted in. Trackers: GitHub Issues or a signed webhook; with none configured the author copies the Markdown.
 
 ### Phase 1 features
 * **Recorder** (`/app/record`): tab / window / screen capture via the browser picker; screen-only, screen + camera, camera-only; camera & mic selection with live preview and mic level meter; tab/system audio when the browser provides it (mixed with the mic); camera bubble composited into the saved video, movable (drag on the live preview or corner presets) and hideable while recording; countdown, timer, pause/resume, restart, stop, recording indicator (page + tab title); handles denied permissions, missing/disconnected devices and the browser’s **Stop sharing**; releases all tracks.
@@ -66,8 +73,8 @@ The web app and the worker are two processes of **one image** (`Dockerfile`). Th
 ```bash
 npm run typecheck && npm run lint
 npm test                 # needs a running server: use the wrapper below
-scripts/test-env.sh      # starts DB + app, runs tests/*.test.ts (17 tests)
-scripts/e2e.sh           # Phase 1 acceptance test in headless Chromium (16 steps + a11y + no page errors)
+scripts/test-env.sh      # starts DB + app, runs tests/*.test.ts (~50 tests, sequentially)
+scripts/e2e.sh           # browser acceptance suites: acceptance (Phase 1), review, requests, bug (Phase 2); E2E_ONLY=review to run one
 ```
 
 * `tests/pipeline.test.ts` — interrupted/out-of-order chunk upload, size verification, concurrent/idempotent finalize (exactly one job), FFmpeg output (duration, faststart), transcript search scoping, trim (+ stale-file withholding), private-by-default permissions, share link guest flow, comments/replies, view counting, download permission, **revocation (no metadata, media URL, captions, transcript, comments or download for a fresh guest)**, expired/tampered signed URLs, failed-processing retry, deletion of media.
@@ -86,7 +93,10 @@ Browser coverage and what is *not* covered: [`docs/BROWSER_MATRIX.md`](docs/BROW
 
 **Deletion.** Deleting a recording removes its DB rows (links, comments, transcript, jobs) and its stored objects (source, playback, thumbnail, leftover chunks). Retention policies and account-level deletion are Phase 3.
 
-## Known limitations (Phase 1)
+## Known limitations
+* **Google Docs:** the SOP “Export for Google Docs” downloads Docs-ready HTML (upload to Drive → Open with Google Docs). Creating the document directly in a Google account needs a Google OAuth app and is **not built**.
+* **Review identity:** guests are not email-verified (Phase 3 adds verified identity and domain restrictions). Approvals by guests are recorded as “guest”.
+* **AI generation / live trackers:** the OpenAI-compatible SOP adapter and the GitHub tracker adapter are tested against local mock servers only, not the real services.
 * Live-account checks not yet done: Supabase Auth magic-link flow, Supabase S3 presigned URLs, and OpenAI-compatible transcription were implemented but **not exercised against live services** here (tests use dev auth, filesystem storage and a mock transcriber). The S3 driver and compose stack are untested in the authoring sandbox (no Docker/S3).
 * Real-browser coverage is Chromium only; see the matrix.
 * Floating pause/stop controls (Document Picture-in-Picture) are not built; use the browser’s *Stop sharing* bar or return to the tab.
