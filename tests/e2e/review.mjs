@@ -130,6 +130,28 @@ try {
     await g.screenshot({ path: "/tmp/rg-e2e/8-review.png" });
   });
 
+  await step("SOP from the approved version: generate, edit, review gate, export", async () => {
+    const vurl = owner.url().split("?")[0];
+    await owner.goto(`${vurl}/sop`);
+    await owner.getByRole("button", { name: "Generate SOP draft" }).click();
+    await owner.getByLabel("Step 1 title").waitFor({ timeout: 60000 });
+    await owner.getByAltText("Screenshot for step 1").waitFor();
+    const texts = await owner.locator("ol").innerText().catch(() => "");
+    expect(!/settings/i.test(await owner.locator("main").innerText() + (await owner.locator("textarea, input").evaluateAll((els) => els.map((e) => e.value).join(" ")))), "redacted words leaked into the SOP");
+    await owner.getByLabel("Step 1 title").fill("Open the dashboard");
+    await owner.getByLabel("Step 1 title").blur();
+    await owner.getByRole("heading", { level: 1 }).waitFor();
+    expect(await owner.getByRole("link", { name: "Export Markdown" }).getAttribute("aria-disabled") === "true", "export should be locked before review");
+    await owner.getByRole("button", { name: "I’ve reviewed this SOP" }).click();
+    await owner.getByText("Marked as reviewed").waitFor();
+    console.log("      " + (await axe(owner, "SOP page a11y")));
+    const [dl] = await Promise.all([owner.waitForEvent("download"), owner.getByRole("link", { name: "Export Markdown" }).click()]);
+    const path = await dl.path();
+    const md = readFileSync(path, "utf8");
+    expect(/^# /.test(md) && /## Step 1: Open the dashboard/.test(md) && /data:image\/jpeg;base64,/.test(md), "markdown export malformed");
+    return dl.suggestedFilename();
+  });
+
   if (errs.length) { failures++; console.log("  ✗ page errors: " + errs.join(" | ")); } else console.log("  ✓ no page errors");
   console.log(failures ? `\nFAILED (${failures})` : "\nAll Phase 2 review/privacy steps passed.");
 } catch { failures ||= 1; } finally { await browser.close(); process.exit(failures ? 1 : 0); }

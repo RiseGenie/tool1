@@ -9,7 +9,10 @@ import { getStorage, keys } from "../src/lib/server/storage";
 import { env } from "../src/lib/server/env";
 import { extractAudioPieces, extractThumbnail, measureDurationMs, probe, transcodeToMp4 } from "./ffmpeg";
 import { getTranscriber } from "./transcribe";
-import { normalizeRedactions } from "../src/lib/server/redactions";
+import { normalizeRedactions, redactSegments } from "../src/lib/server/redactions";
+import { mapSegments } from "../src/lib/server/timeline";
+import { getSopGenerator } from "../src/lib/server/sop";
+import { randomUUID } from "node:crypto";
 
 type Rec = {
   id: string; revision: number; mime_type: string | null; source_key: string | null; source_duration_ms: number | null;
@@ -163,6 +166,69 @@ export async function transcribeJob(job: Job): Promise<void> {
 /** Called when a job has exhausted its retries: surface the failure on the recording so the UI can offer Retry. */
 export async function markFailed(job: Job, err: unknown) {
   const msg = (err instanceof Error ? err.message : String(err)).slice(0, 500);
-  if (job.kind === "process") await query(`update recordings set status='failed', failure_reason=$2, updated_at=now() where id=$1`, [job.recording_id, msg]);
+  if (job.kind === "sop") await query(`update sops set status='failed', error=$2, updated_at=now() where id=$1`, [job.payload.sopId, msg]);
+  else if (job.kind === "process") await query(`update recordings set status='failed', failure_reason=$2, updated_at=now() where id=$1`, [job.recording_id, msg]);
   else await query(`update recordings set transcript_status='failed', transcript_error=$2 where id=$1`, [job.recording_id, msg]);
+}
+
+/** Build an SOP draft for a version from its SANITIZED transcript (redactions applied) and frames taken from its sanitized playback. */
+export async function sopJob(job: Job): Promise<void> {
+  const sop = await one<{ id: string; recording_id: string; title: string; generation: number }>(`select id, recording_id, title, generation from sops where id=$1`, [job.payload.sopId]);
+  if (!sop) return;
+  const rec = await one<Rec & { title: string; trim_start_ms: number }>(`select * from recordings where id=$1`, [sop.recording_id]);
+  if (!rec?.playback_key || !rec.duration_ms) throw new Error("The version has no playable video yet");
+  const dur = rec.duration_ms;
+  const st = getStorage();
+  const rows = await query<{ idx: number; start_ms: number; end_ms: number; text: string }>(`select idx, start_ms, end_ms, text from transcript_segments where recording_id=$1 order by idx`, [rec.id]);
+  const segs = mapSegments(redactSegments(rows, normalizeRedactions(rec.redactions)), rec as never).map((s) => ({ idx: s.idx, startMs: s.start_ms, endMs: s.end_ms, text: s.text }));
+  const gen = getSopGenerator();
+  const draft = await gen.generate(segs, dur, sop.title);
+  await withTmp(async (dir) => {
+    const play = join(dir, "play.mp4");
+    await st.downloadTo(rec.playback_key!, play);
+    const old = await query<{ screenshot_key: string | null }>(`select screenshot_key from sop_steps where sop_id=$1`, [sop.id]);
+    const built: { id: string; key: string | null }[] = [];
+    const ids: string[] = [];
+    for (let i = 0; i < draft.steps.length; i++) {
+      const id = randomUUID();
+      ids.push(id);
+      const out = join(dir, `s${i}.jpg`);
+      let key: string | null = null;
+      try {
+        await extractThumbnail(play, out, Math.min(draft.steps[i].atMs + 200, Math.max(0, dur - 100)));
+        key = `sops/${sop.id}/${id}.jpg`;
+        await st.uploadFrom(out, key, "image/jpeg");
+      } catch { key = null; }
+      built.push({ id, key });
+    }
+    await tx(async (c) => {
+      const cur = (await c.query(`select generation from sops where id=$1 for update`, [sop.id])).rows[0];
+      if (!cur || cur.generation !== sop.generation) return; // superseded by a newer regeneration
+      await c.query(`delete from sop_steps where sop_id=$1`, [sop.id]);
+      for (let i = 0; i < draft.steps.length; i++)
+        await c.query(`insert into sop_steps(id, sop_id, idx, title, body, at_ms, screenshot_key) values ($1,$2,$3,$4,$5,$6,$7)`, [built[i].id, sop.id, i, draft.steps[i].title, draft.steps[i].body, draft.steps[i].atMs, built[i].key]);
+      await c.query(`update sops set title=$2, status='draft', error=$3, generator=$4, generated_from_revision=$5, reviewed_at=null, updated_at=now() where id=$1`, [sop.id, draft.title, draft.notes.join(" ") || null, gen.name, rec.revision]);
+    });
+    await Promise.allSettled(old.filter((o) => o.screenshot_key).map((o) => st.remove(o.screenshot_key!)));
+  });
+}
+
+/** Re-take one step's screenshot after its timestamp was edited or a step was added. */
+export async function sopFrameJob(job: Job): Promise<void> {
+  const step = await one<{ id: string; sop_id: string; at_ms: number; screenshot_key: string | null; recording_id: string }>(
+    `select s.id, s.sop_id, s.at_ms, s.screenshot_key, p.recording_id from sop_steps s join sops p on p.id = s.sop_id where s.id=$1`, [job.payload.stepId]);
+  if (!step) return;
+  const rec = await one<Rec>(`select * from recordings where id=$1`, [step.recording_id]);
+  if (!rec?.playback_key || !rec.duration_ms) return;
+  const dur = rec.duration_ms;
+  await withTmp(async (dir) => {
+    const play = join(dir, "play.mp4");
+    await getStorage().downloadTo(rec.playback_key!, play);
+    const out = join(dir, "f.jpg");
+    await extractThumbnail(play, out, Math.min(step.at_ms + 200, Math.max(0, dur - 100)));
+    const key = `sops/${step.sop_id}/${step.id}-${Date.now()}.jpg`;
+    await getStorage().uploadFrom(out, key, "image/jpeg");
+    await query(`update sop_steps set screenshot_key=$2 where id=$1`, [step.id, key]);
+    if (step.screenshot_key) await getStorage().remove(step.screenshot_key).catch(() => {});
+  });
 }

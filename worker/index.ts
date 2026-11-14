@@ -1,6 +1,6 @@
 import { claim, complete, fail } from "../src/lib/server/jobs";
 import { pool } from "../src/lib/server/db";
-import { markFailed, processJob, transcribeJob } from "./process";
+import { markFailed, processJob, sopFrameJob, sopJob, transcribeJob } from "./process";
 
 let stopping = false;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -12,6 +12,7 @@ export async function runOnce(): Promise<boolean> {
   try {
     if (job.kind === "process") await processJob(job);
     else if (job.kind === "transcribe") await transcribeJob(job);
+    else if (job.kind === "sop") await (job.payload.stepId ? sopFrameJob(job) : sopJob(job));
     else throw new Error(`Unknown job kind ${job.kind}`);
     await complete(job.id);
     console.log(`[worker] ${job.kind} ${job.recording_id} ok in ${Date.now() - t0}ms`);

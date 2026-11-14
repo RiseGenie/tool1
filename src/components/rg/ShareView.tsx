@@ -55,6 +55,15 @@ export function ShareView({ token, title, allowDownload, allowComments, signedIn
     return () => clearInterval(t);
   }, [waiting, loadMeta]);
 
+  // Deep links from exported SOPs: /s/<token>?t=<ms> opens at that moment.
+  const playableNow = !!meta?.playable;
+  useEffect(() => {
+    const t = Number(new URLSearchParams(location.search).get("t"));
+    if (!playableNow || !t) return;
+    const h = setTimeout(() => player.current?.seek(t), 900);
+    return () => clearTimeout(h);
+  }, [playableNow]);
+
   const transcriptReady = meta?.transcriptStatus === "ready";
   useEffect(() => {
     if (!transcriptReady) return;

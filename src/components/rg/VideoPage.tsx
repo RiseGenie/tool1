@@ -100,6 +100,7 @@ export function VideoPage({ id }: { id: string }) {
   return (
     <div>
       <Link href="/app" className="mb-3 inline-flex min-h-9 items-center gap-1 text-sm font-medium text-[color:var(--rg-muted)] hover:text-[color:var(--rg-ink)]"><ArrowLeft className="size-4" aria-hidden />Library</Link>
+      <h1 className="sr-only">{rec.title}</h1>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-4">
           {playable ? (
@@ -184,6 +185,7 @@ export function VideoPage({ id }: { id: string }) {
           <VersionsPanel id={id} ready={rec.status === "ready"} isDraft={rec.isDraft} locked={rec.locked} onChange={load} />
           {rec.isDraft ? <div className="rg-card p-4 text-sm"><h2 className="font-semibold">Share</h2><p className="mt-1 text-[color:var(--rg-muted)]">Publish this draft to share it. Links use the current published version.</p></div> : <SharePanel rec={rec} links={links} activeCount={activeLinks.length} reload={load} patch={patch} />}
           <PrivacyPanel key={rec.revision + String(rec.locked)} value={rec.redactions} rawSegments={rawSegs} playheadSourceMs={ms + rec.trimStartMs} sourceDurationMs={rec.sourceDurationMs ?? 0} disabled={rec.status !== "ready" || rec.locked} onSave={async (r) => patch({ redactions: r }, "Privacy edits saved. Rendering sanitized version…")} />
+          {rec.status === "ready" && <div className="rg-card space-y-2 p-4"><h2 className="font-semibold">SOP</h2><p className="text-sm text-[color:var(--rg-muted)]">Turn this version into step-by-step instructions with screenshots.</p><Link href={`/app/v/${id}/sop`} className="rg-btn">Open SOP</Link></div>}
           <TrimPanel rec={rec} playheadMs={ms} patch={patch} />
           <div className="rg-card space-y-3 p-4">
             <h2 className="font-semibold">Details</h2>

@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import { one, pool } from "./db";
 
-export type JobKind = "process" | "transcribe";
+export type JobKind = "process" | "transcribe" | "sop";
 export type Job = {
   id: string;
   kind: JobKind;
