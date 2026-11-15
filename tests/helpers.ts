@@ -64,3 +64,13 @@ export async function uploadChunk(c: Client, id: string, idx: number, data: Buff
   if (!put.ok) throw new Error(`chunk put ${put.status}`);
   return c.fetch(`/api/uploads/${id}/chunks/${idx}/complete`, { method: "POST", json: { size: data.length } });
 }
+
+/** A fragmented H.264/AAC MP4 like Chrome's MediaRecorder produces. Baseline profile so a stream copy is distinguishable from our High-profile transcode. */
+export function makeMp4Fixture(seconds = 6) {
+  const dir = mkdtempSync(join(tmpdir(), "rg-fixture-mp4-"));
+  const out = join(dir, "fixture.mp4");
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", `testsrc2=size=640x360:rate=25:duration=${seconds}`, "-f", "lavfi", "-i", `sine=frequency=440:duration=${seconds}`,
+    "-c:v", "libx264", "-profile:v", "baseline", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "frag_keyframe+empty_moov+default_base_moof", out]);
+  const bytes = readFileSync(out);
+  return { path: out, bytes, size: statSync(out).size };
+}

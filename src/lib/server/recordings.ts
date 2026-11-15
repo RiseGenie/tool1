@@ -45,6 +45,8 @@ export type Recording = {
   submitter_name: string | null;
   submitter_email: string | null;
   submission_kind: string | null;
+  playback_mime: string;
+  universal: boolean;
 };
 
 export const MEDIA_TTL_SEC = Number(process.env.MEDIA_URL_TTL_SEC || 300);
@@ -97,13 +99,14 @@ export async function mediaUrls(rec: Recording, opts: { download?: boolean } = {
   if (!rec.playback_key) throw notFound();
   const video = await s.presignGet(rec.playback_key, {
     ttlSec: MEDIA_TTL_SEC,
-    contentType: "video/mp4",
-    filename: opts.download ? `${rec.title.replace(/[^\w\- ]+/g, "").trim() || "recording"}.mp4` : undefined,
+    contentType: rec.playback_mime,
+    filename: opts.download ? `${rec.title.replace(/[^\w\- ]+/g, "").trim() || "recording"}.${rec.playback_mime.includes("webm") ? "webm" : "mp4"}` : undefined,
   });
   const poster = rec.thumbnail_key
     ? await s.presignGet(rec.thumbnail_key, { ttlSec: MEDIA_TTL_SEC, contentType: "image/jpeg" })
     : null;
-  return { video, poster, expiresAt: Date.now() + MEDIA_TTL_SEC * 1000 };
+  // `mime`/`universal` let the player tell when the instant WebM can't play on this device and the MP4 is still being prepared.
+  return { video, poster, expiresAt: Date.now() + MEDIA_TTL_SEC * 1000, mime: rec.playback_mime, universal: rec.universal };
 }
 
 /** First-party anonymous viewer id (per browser). Never treated as an identity. */
@@ -147,6 +150,7 @@ export function publicRecording(rec: Recording) {
     redactions: normalizeRedactions(rec.redactions),
     submitterName: rec.submitter_name,
     fromRequest: !!rec.request_id,
+    universal: rec.universal,
   };
 }
 

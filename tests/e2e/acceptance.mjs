@@ -53,7 +53,7 @@ try {
   const logs = [];
   rec.on("pageerror", (e) => logs.push("pageerror: " + e.message));
   rec.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::ERR/.test(m.text())) logs.push("console.error: " + m.text().slice(0, 200)); });
-  await rec.addInitScript(() => { window.__RG_PART_BYTES = 150_000; });
+  await rec.addInitScript(() => { window.__RG_PART_BYTES = 25_000; });
   await rec.goto(`${BASE}/app/record`);
 
   await step("recorder shows capability list and capture options", async () => {
@@ -118,7 +118,7 @@ try {
   await step("upload interrupted: server has only part of it", async () => {
     await sleep(3000);
     const r = await (await ownerCtx.request.get(`${BASE}/api/uploads/${recId}`)).json();
-    expect(r.status === "open", "upload should still be open");
+    expect(r.status === "open", "upload should still be open: " + JSON.stringify(r));
     expect(r.received.length >= 1, "first part should have arrived");
     return `server has ${r.received.length} part(s), ${puts} PUT attempts, finalize not reached`;
   });
@@ -149,6 +149,8 @@ try {
   });
 
   await step("camera overlay is composited into the saved video (sampled pixel)", async () => {
+    // The clip is watchable as soon as the instant WebM exists; the H.264 MP4 follows in the background.
+    for (let i = 0; i < 90; i++) { if ((await (await ownerCtx.request.get(`${BASE}/api/recordings/${recId}`)).json()).recording.universal) break; await sleep(1000); }
     const play = `${STORAGE}/recordings/${recId}/playback-r1.mp4`;
     const probe = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-print_format", "json", "-show_streams", play]).toString());
     const v = probe.streams.find((s) => s.codec_type === "video");

@@ -202,5 +202,7 @@ export const keys = {
   chunk: (recordingId: string, idx: number) => `uploads/${recordingId}/chunks/${String(idx).padStart(6, "0")}`,
   source: (recordingId: string, ext: string) => `recordings/${recordingId}/source.${ext}`,
   playback: (recordingId: string, revision: number) => `recordings/${recordingId}/playback-r${revision}.mp4`,
+  /** Instant stage-1 playback: the original WebM stream-copied into a seekable file. */
+  instant: (recordingId: string, revision: number) => `recordings/${recordingId}/instant-r${revision}.webm`,
   thumb: (recordingId: string, revision: number) => `recordings/${recordingId}/thumb-r${revision}.jpg`,
 };

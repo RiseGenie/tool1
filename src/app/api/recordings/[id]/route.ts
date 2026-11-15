@@ -7,6 +7,9 @@ import { getOwned, publicRecording, type Recording } from "@/lib/server/recordin
 import { enqueue } from "@/lib/server/jobs";
 import { needsRender, normalizeRedactions, redactionsSchema } from "@/lib/server/redactions";
 import { getStorage } from "@/lib/server/storage";
+import { kick } from "@/lib/server/inline-worker";
+
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -97,6 +100,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
     return { next, oldPlayback: rerender ? rec.playback_key : null, oldThumb: rerender ? rec.thumbnail_key : null };
   });
   void result.oldPlayback; // old revision files are deleted by the worker once the new revision is in place
+  kick();
   return NextResponse.json({ recording: publicRecording(result.next) });
 });
 

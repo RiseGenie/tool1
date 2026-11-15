@@ -10,7 +10,16 @@ export type Capabilities = {
   items: Capability[];
 };
 
-const MIMES = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4;codecs=avc1,mp4a.40.2", "video/mp4"];
+// WebM first: its MediaRecorder emits data every second, which is what makes upload-while-recording and crash recovery work.
+// (Chrome's MP4 recorder delivers nothing until you stop.) Browsers that can only record MP4, like Safari, use the fallbacks.
+const MIMES = [
+  "video/webm;codecs=vp9,opus",
+  "video/webm;codecs=vp8,opus",
+  "video/webm",
+  "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+  "video/mp4;codecs=avc1,mp4a.40.2",
+  "video/mp4",
+];
 
 export function pickMimeType(): string {
   if (typeof MediaRecorder === "undefined") return "";

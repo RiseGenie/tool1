@@ -56,6 +56,17 @@ Or run everything in containers: `docker compose up --build` (Postgres + MinIO +
 ## Environment variables
 See [`.env.example`](.env.example) for the full annotated list. Required in production: `DATABASE_URL`, `APP_SECRET`, `APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `S3_*`. Credentials are read server-side only; only `NEXT_PUBLIC_*` values reach the browser (Supabase URL + anon key are public by design).
 
+## Speed: how a recording becomes watchable
+
+Time-to-watch does not depend on video length. After the last upload part arrives:
+1. **Instant stage (≈ 0.1–0.5 s):** the worker stream-copies the recording into a clean, seekable file and marks it **ready**. WebM recordings (Chrome, Edge, Firefox) become a WebM; H.264 recordings (e.g. uploaded MP4s) become a universal MP4 immediately. No re-encode.
+2. **Background stage:** WebM recordings are re-encoded to H.264 MP4 (what iPhones and older Safari need) and swapped in. Until then, devices that can't play WebM see “Optimizing this video for your device…”. On a 4-core machine a 60 s 1080p clip re-encodes in ~17 s; the instant stage took 0.14 s.
+3. Trims and privacy edits always render straight to MP4 (nothing unedited is served while they run).
+
+Why WebM and not MP4 when recording: Chrome's MP4 recorder delivers no data until you press stop, which would disable upload-while-recording and crash recovery. WebM delivers a piece every second.
+
+**No separate worker needed for the common case.** With `INLINE_WORKER=1` (set on Vercel) the web app drains the job queue *after* sending each response, in the same function invocation, using bundled static `ffmpeg`/`ffprobe` (`ffmpeg-static`, `ffprobe-static`). The instant stage fits easily. Heavy work (long background re-encodes, blur/mute renders, long transcriptions) is limited by the function time limit (`INLINE_WORKER_BUDGET_MS`, default 240 s); a job cut off by the limit is retried when its 6-minute lock (`JOB_LOCK_MINUTES`) expires. For long recordings or heavy use, also run the dedicated worker (below); both can run together because jobs are claimed with `SKIP LOCKED`.
+
 ## Deployment
 
 The web app and the worker are two processes of **one image** (`Dockerfile`). The worker needs FFmpeg and a long-lived process, so it cannot run on Vercel serverless; the web app can run anywhere Node runs.

@@ -18,7 +18,7 @@ export function run(cmd: string, args: string[], opts: { timeoutMs?: number } = 
   });
 }
 
-export type Probe = { width: number | null; height: number | null; hasAudio: boolean; durationMs: number | null };
+export type Probe = { width: number | null; height: number | null; hasAudio: boolean; durationMs: number | null; videoCodec: string | null; audioCodec: string | null };
 
 export async function probe(path: string): Promise<Probe> {
   const { stdout } = await run(env.ffprobePath, ["-v", "error", "-print_format", "json", "-show_streams", "-show_format", path]);
@@ -26,7 +26,7 @@ export async function probe(path: string): Promise<Probe> {
   const v = (j.streams || []).find((s: { codec_type: string }) => s.codec_type === "video");
   const a = (j.streams || []).find((s: { codec_type: string }) => s.codec_type === "audio");
   const d = Number(j.format?.duration);
-  return { width: v?.width ?? null, height: v?.height ?? null, hasAudio: !!a, durationMs: Number.isFinite(d) && d > 0 ? Math.round(d * 1000) : null };
+  return { width: v?.width ?? null, height: v?.height ?? null, hasAudio: !!a, durationMs: Number.isFinite(d) && d > 0 ? Math.round(d * 1000) : null, videoCodec: v?.codec_name ?? null, audioCodec: a?.codec_name ?? null };
 }
 
 /**
@@ -73,6 +73,26 @@ export async function transcodeToMp4(opts: { src: string; out: string; startMs: 
   }
   args.push("-movflags", "+faststart", opts.out); // moov atom first: the file can start playing and seek before it has fully downloaded
   await run(env.ffmpegPath, args, { timeoutMs: 60 * 60 * 1000 });
+}
+
+/**
+ * Fast path: the browser already recorded H.264, so no re-encode is needed. Copy the video stream into a regular MP4 with the
+ * index at the front (+faststart) so it plays and seeks immediately. Audio is copied if it is AAC, otherwise re-encoded to AAC
+ * (cheap). Takes seconds regardless of video length, versus real-time-ish for a full transcode.
+ */
+export async function remuxFast(opts: { src: string; out: string; hasAudio: boolean; audioCodec: string | null }) {
+  await run(env.ffmpegPath, [
+    "-nostdin", "-y", "-hide_banner", "-i", opts.src,
+    "-map", "0:v:0", ...(opts.hasAudio ? ["-map", "0:a:0"] : ["-an"]),
+    "-c:v", "copy",
+    ...(opts.hasAudio ? (opts.audioCodec === "aac" ? ["-c:a", "copy"] : ["-c:a", "aac", "-b:a", "128k"]) : []),
+    "-avoid_negative_ts", "make_zero", "-movflags", "+faststart", opts.out,
+  ], { timeoutMs: 10 * 60 * 1000 });
+}
+
+/** Stage 1 for WebM recordings: copy the streams into a clean WebM (real duration + seek index). No re-encode, so it takes seconds. */
+export async function remuxWebm(src: string, out: string) {
+  await run(env.ffmpegPath, ["-nostdin", "-y", "-hide_banner", "-fflags", "+genpts", "-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-c", "copy", "-f", "webm", out], { timeoutMs: 10 * 60 * 1000 });
 }
 
 export async function extractThumbnail(src: string, out: string, atMs: number) {

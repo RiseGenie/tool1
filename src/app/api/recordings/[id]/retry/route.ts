@@ -4,6 +4,9 @@ import { handle, HttpError } from "@/lib/server/http";
 import { requireSession } from "@/lib/server/auth";
 import { getOwned } from "@/lib/server/recordings";
 import { enqueue } from "@/lib/server/jobs";
+import { kick } from "@/lib/server/inline-worker";
+
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -18,5 +21,6 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     await query(`update recordings set transcript_status='queued', transcript_error=null where id=$1`, [rec.id]);
     await enqueue("transcribe", rec.id, { dedupeKey: `transcribe:${rec.id}` });
   } else throw new HttpError(409, "Nothing to retry");
+  kick();
   return NextResponse.json({ ok: true });
 });

@@ -7,7 +7,7 @@ import { one, query, tx } from "../src/lib/server/db";
 import { enqueue, type Job } from "../src/lib/server/jobs";
 import { getStorage, keys } from "../src/lib/server/storage";
 import { env } from "../src/lib/server/env";
-import { extractAudioPieces, extractThumbnail, measureDurationMs, probe, transcodeToMp4 } from "./ffmpeg";
+import { extractAudioPieces, extractThumbnail, measureDurationMs, probe, remuxFast, remuxWebm, transcodeToMp4 } from "./ffmpeg";
 import { getTranscriber } from "./transcribe";
 import { normalizeRedactions, redactSegments } from "../src/lib/server/redactions";
 import { mapSegments } from "../src/lib/server/timeline";
@@ -58,6 +58,22 @@ async function assembleSource(rec: Rec, dir: string): Promise<string> {
   return local;
 }
 
+
+/** The playback file can be swapped (instant WebM -> MP4) while a job runs. Re-read the current key and retry once if the file vanished. */
+async function downloadPlayback(recordingId: string, dest: string): Promise<{ key: string; durationMs: number | null }> {
+  for (let attempt = 0; ; attempt++) {
+    const r = await one<{ playback_key: string | null; duration_ms: number | null }>(`select playback_key, duration_ms from recordings where id=$1`, [recordingId]);
+    if (!r?.playback_key) throw new Error("The version has no playable video yet");
+    try {
+      await getStorage().downloadTo(r.playback_key, dest);
+      return { key: r.playback_key, durationMs: r.duration_ms };
+    } catch (e) {
+      if (attempt >= 2) throw e;
+      await new Promise((res) => setTimeout(res, 1500));
+    }
+  }
+}
+
 async function loadRec(id: string) {
   return one<Rec>(`select * from recordings where id=$1 and deleted_at is null`, [id]);
 }
@@ -71,7 +87,7 @@ export async function processJob(job: Job): Promise<void> {
     if (!rec.playback_key) return;
     await withTmp(async (dir) => {
       const play = join(dir, "play.mp4");
-      await st.downloadTo(rec.playback_key!, play);
+      await downloadPlayback(rec.id, play);
       const dur = rec.duration_ms ?? 1000;
       const at = Math.min(rec.thumbnail_at_ms ?? Math.min(1000, dur / 2), Math.max(0, dur - 100));
       const out = join(dir, "thumb.jpg");
@@ -87,19 +103,36 @@ export async function processJob(job: Job): Promise<void> {
   await withTmp(async (dir) => {
     const src = await assembleSource(rec, dir);
     const meta = await probe(src);
-    const sourceMs = rec.source_duration_ms ?? (await measureDurationMs(src));
-
-    const start = Math.min(rec.trim_start_ms, Math.max(0, sourceMs - 500));
-    const end = rec.trim_end_ms !== null ? Math.min(rec.trim_end_ms, sourceMs) : null;
-    const play = join(dir, "playback.mp4");
-    // Privacy edits are stored on the source timeline; map them onto the trimmed output timeline.
     const red = normalizeRedactions(rec.redactions);
-    const outLen = ((end ?? sourceMs) - start) / 1000;
-    const shift = (ms: number) => Math.max(0, (ms - start) / 1000);
-    const live = <T extends { startMs: number; endMs: number }>(r: T) => r.endMs > start && (end === null || r.startMs < end) && shift(r.startMs) < outLen;
-    const blurs = red.blurs.filter(live).map((b) => ({ x: b.x, y: b.y, w: b.w, h: b.h, s: shift(b.startMs), e: shift(b.endMs) }));
-    const mutes = red.mutes.filter(live).map((m) => ({ s: shift(m.startMs), e: shift(m.endMs) }));
-    await transcodeToMp4({ src, out: play, startMs: start, endMs: end, hasAudio: meta.hasAudio, blurs, mutes });
+    // Unedited recordings never need a re-encode before they can be watched:
+    //  - H.264 source: stream-copy into an MP4 (universal, done).
+    //  - WebM source: stream-copy into a seekable WebM now ("instant"), and re-encode to MP4 in the background.
+    // Anything trimmed/redacted is rendered to MP4 directly (nothing unredacted is ever served while that runs).
+    const untouched = rec.trim_start_ms === 0 && rec.trim_end_ms === null && !red.blurs.length && !red.mutes.length;
+    const instantWebm = untouched && meta.videoCodec !== "h264" && ["vp8", "vp9", "av1"].includes(meta.videoCodec ?? "");
+    const play = join(dir, instantWebm ? "playback.webm" : "playback.mp4");
+    const playMime = instantWebm ? "video/webm" : "video/mp4";
+    let sourceMs: number;
+    if (untouched && meta.videoCodec === "h264") {
+      await remuxFast({ src, out: play, hasAudio: meta.hasAudio, audioCodec: meta.audioCodec });
+      sourceMs = rec.source_duration_ms ?? (await probe(play)).durationMs ?? (await measureDurationMs(src));
+      console.log(`[worker] fast path (stream copy) for ${rec.id}`);
+    } else if (instantWebm) {
+      await remuxWebm(src, play);
+      sourceMs = rec.source_duration_ms ?? (await probe(play)).durationMs ?? (await measureDurationMs(src));
+      console.log(`[worker] instant stage (WebM stream copy) for ${rec.id}`);
+    } else {
+      sourceMs = rec.source_duration_ms ?? (await measureDurationMs(src));
+      const start = Math.min(rec.trim_start_ms, Math.max(0, sourceMs - 500));
+      const end = rec.trim_end_ms !== null ? Math.min(rec.trim_end_ms, sourceMs) : null;
+      // Privacy edits are stored on the source timeline; map them onto the trimmed output timeline.
+      const outLen = ((end ?? sourceMs) - start) / 1000;
+      const shift = (ms: number) => Math.max(0, (ms - start) / 1000);
+      const live = <T extends { startMs: number; endMs: number }>(r: T) => r.endMs > start && (end === null || r.startMs < end) && shift(r.startMs) < outLen;
+      const blurs = red.blurs.filter(live).map((b) => ({ x: b.x, y: b.y, w: b.w, h: b.h, s: shift(b.startMs), e: shift(b.endMs) }));
+      const mutes = red.mutes.filter(live).map((m) => ({ s: shift(m.startMs), e: shift(m.endMs) }));
+      await transcodeToMp4({ src, out: play, startMs: start, endMs: end, hasAudio: meta.hasAudio, blurs, mutes });
+    }
     const out = await probe(play);
     if (!out.durationMs) throw new Error("Processed video has no duration");
 
@@ -107,22 +140,23 @@ export async function processJob(job: Job): Promise<void> {
     const thumb = join(dir, "thumb.jpg");
     await extractThumbnail(play, thumb, thumbAt);
 
-    const playKey = keys.playback(rec.id, rev);
+    const playKey = instantWebm ? keys.instant(rec.id, rev) : keys.playback(rec.id, rev);
     const thumbKey = keys.thumb(rec.id, rev);
-    await st.uploadFrom(play, playKey, "video/mp4");
+    await st.uploadFrom(play, playKey, playMime);
     await st.uploadFrom(thumb, thumbKey, "image/jpeg");
 
     const transcriptStatus = !meta.hasAudio ? "none" : env.transcribe.provider === "none" ? "disabled" : null;
     const committed = await tx(async (c) => {
       const r = await c.query(
         `update recordings set playback_key=$2, thumbnail_key=$3, duration_ms=$4, source_duration_ms=$5, width=$6, height=$7,
-                has_audio=$8, status='ready', failure_reason=null, updated_at=now(),
+                has_audio=$8, status='ready', failure_reason=null, updated_at=now(), playback_mime=$11, universal=$12,
                 transcript_status = case when transcript_status in ('ready','processing') then transcript_status else coalesce($9, 'queued') end
           where id=$1 and revision=$10 returning transcript_status`,
-        [rec.id, playKey, thumbKey, out.durationMs, sourceMs, out.width, out.height, meta.hasAudio, transcriptStatus, rev],
+        [rec.id, playKey, thumbKey, out.durationMs, sourceMs, out.width, out.height, meta.hasAudio, transcriptStatus, rev, playMime, !instantWebm],
       );
       if (!r.rowCount) return false; // a newer revision superseded this render
       if (r.rows[0].transcript_status === "queued") await enqueue("transcribe", rec.id, { dedupeKey: `transcribe:${rec.id}`, client: c });
+      if (instantWebm) await enqueue("transcode", rec.id, { payload: { revision: rev }, dedupeKey: `transcode:${rec.id}:${rev}`, client: c });
       return true;
     });
     if (!committed) {
@@ -130,7 +164,7 @@ export async function processJob(job: Job): Promise<void> {
       return;
     }
     // Remove files from earlier revisions now that the new one is live.
-    await Promise.allSettled(Array.from({ length: rev - 1 }, (_, i) => [st.remove(keys.playback(rec.id, i + 1)), st.remove(keys.thumb(rec.id, i + 1))]).flat());
+    await Promise.allSettled(Array.from({ length: rev - 1 }, (_, i) => [st.remove(keys.playback(rec.id, i + 1)), st.remove(keys.instant(rec.id, i + 1)), st.remove(keys.thumb(rec.id, i + 1))]).flat());
   });
 }
 
@@ -166,6 +200,7 @@ export async function transcribeJob(job: Job): Promise<void> {
 /** Called when a job has exhausted its retries: surface the failure on the recording so the UI can offer Retry. */
 export async function markFailed(job: Job, err: unknown) {
   const msg = (err instanceof Error ? err.message : String(err)).slice(0, 500);
+  if (job.kind === "transcode") return; // the instant WebM stays playable; the universal MP4 can be retried
   if (job.kind === "sop") await query(`update sops set status='failed', error=$2, updated_at=now() where id=$1`, [job.payload.sopId, msg]);
   else if (job.kind === "process") await query(`update recordings set status='failed', failure_reason=$2, updated_at=now() where id=$1`, [job.recording_id, msg]);
   else await query(`update recordings set transcript_status='failed', transcript_error=$2 where id=$1`, [job.recording_id, msg]);
@@ -185,7 +220,7 @@ export async function sopJob(job: Job): Promise<void> {
   const draft = await gen.generate(segs, dur, sop.title);
   await withTmp(async (dir) => {
     const play = join(dir, "play.mp4");
-    await st.downloadTo(rec.playback_key!, play);
+    await downloadPlayback(rec.id, play);
     const old = await query<{ screenshot_key: string | null }>(`select screenshot_key from sop_steps where sop_id=$1`, [sop.id]);
     const built: { id: string; key: string | null }[] = [];
     const ids: string[] = [];
@@ -223,12 +258,41 @@ export async function sopFrameJob(job: Job): Promise<void> {
   const dur = rec.duration_ms;
   await withTmp(async (dir) => {
     const play = join(dir, "play.mp4");
-    await getStorage().downloadTo(rec.playback_key!, play);
+    await downloadPlayback(rec.id, play);
     const out = join(dir, "f.jpg");
     await extractThumbnail(play, out, Math.min(step.at_ms + 200, Math.max(0, dur - 100)));
     const key = `sops/${step.sop_id}/${step.id}-${Date.now()}.jpg`;
     await getStorage().uploadFrom(out, key, "image/jpeg");
     await query(`update sop_steps set screenshot_key=$2 where id=$1`, [step.id, key]);
     if (step.screenshot_key) await getStorage().remove(step.screenshot_key).catch(() => {});
+  });
+}
+
+/** Stage 2: replace the instant WebM with a universal H.264 MP4 (what iPhones and older Safari need). Skipped if the recording moved on. */
+export async function transcodeJob(job: Job): Promise<void> {
+  const rec = await loadRec(job.recording_id);
+  const rev = Number(job.payload.revision);
+  if (!rec || !rec.source_key || rec.revision !== rev) return;
+  const cur = await one<{ universal: boolean }>(`select universal from recordings where id=$1`, [rec.id]);
+  if (!cur || cur.universal) return;
+  const st = getStorage();
+  await withTmp(async (dir) => {
+    const src = join(dir, `source.${ext(rec.mime_type)}`);
+    await st.downloadTo(rec.source_key!, src);
+    const meta = await probe(src);
+    const out = join(dir, "playback.mp4");
+    await transcodeToMp4({ src, out, startMs: 0, endMs: null, hasAudio: meta.hasAudio });
+    const info = await probe(out);
+    if (!info.durationMs) throw new Error("Transcoded video has no duration");
+    const key = keys.playback(rec.id, rev);
+    await st.uploadFrom(out, key, "video/mp4");
+    const old = await one<{ playback_key: string | null }>(`select playback_key from recordings where id=$1 and revision=$2 and universal=false`, [rec.id, rev]);
+    const swapped = await query(
+      `update recordings set playback_key=$2, playback_mime='video/mp4', universal=true, duration_ms=$3, width=$4, height=$5, updated_at=now()
+        where id=$1 and revision=$6 and universal=false returning id`,
+      [rec.id, key, info.durationMs, info.width, info.height, rev],
+    );
+    if (!swapped.length) return void (await st.remove(key).catch(() => {})); // an edit superseded this
+    if (old?.playback_key) await st.remove(old.playback_key).catch(() => {});
   });
 }

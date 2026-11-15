@@ -43,7 +43,7 @@ export async function GET(req: Request) {
   } catch {
     return new Response("Not found", { status: 404 });
   }
-  const type = g.key!.endsWith(".mp4") ? "video/mp4" : g.key!.endsWith(".jpg") ? "image/jpeg" : "application/octet-stream";
+  const type = g.key!.endsWith(".mp4") ? "video/mp4" : g.key!.endsWith(".webm") ? "video/webm" : g.key!.endsWith(".jpg") ? "image/jpeg" : "application/octet-stream";
   const headers: Record<string, string> = {
     "content-type": type,
     "accept-ranges": "bytes",

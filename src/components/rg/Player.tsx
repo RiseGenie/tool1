@@ -4,7 +4,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { Captions, Maximize, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { fmtTime } from "./StatusBadge";
 
-export type Media = { video: string; poster: string | null; expiresAt: number };
+export type Media = { video: string; poster: string | null; expiresAt: number; mime?: string; universal?: boolean };
 export type PlayerHandle = { seek: (ms: number) => void; play: () => void; pause: () => void; currentMs: () => number };
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -27,6 +27,7 @@ export const Player = forwardRef<
   const box = useRef<HTMLDivElement>(null);
   const [media, setMedia] = useState<Media | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
   const [dur, setDur] = useState(0);
@@ -44,6 +45,13 @@ export const Player = forwardRef<
   const load = useCallback(async () => {
     try {
       const m = await cb.current.getMedia();
+      // The instant WebM may not play on this device (iPhone, older Safari). Wait for the MP4 instead of showing a broken player.
+      if (m.universal === false && m.mime && document.createElement("video").canPlayType(m.mime) === "") {
+        setWaiting(true);
+        setTimeout(() => void load(), 3000);
+        return null;
+      }
+      setWaiting(false);
       setMedia(m);
       setErr(null);
       return m;
@@ -185,7 +193,7 @@ export const Player = forwardRef<
           {captionsUrl && <track kind="captions" src={captionsUrl} srcLang="en" label="English" />}
         </video>
       )}
-      {!media && <div className="grid aspect-video place-items-center text-sm text-white/80" role="status">{err ?? "Loading video…"}</div>}
+      {!media && <div className="grid aspect-video place-items-center text-sm text-white/80" role="status">{waiting ? "Optimizing this video for your device… it will start automatically." : err ?? "Loading video…"}</div>}
       {err && media && <div role="alert" className="absolute inset-x-0 top-0 bg-red-700 p-2 text-center text-sm text-white">{err}</div>}
       {media && !playing && (
         <button onClick={() => void toggle()} aria-label="Play video" className="absolute inset-0 grid place-items-center bg-black/20">

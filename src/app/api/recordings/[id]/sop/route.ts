@@ -6,6 +6,9 @@ import { getOwned } from "@/lib/server/recordings";
 import { enqueue } from "@/lib/server/jobs";
 import { sopView, type Sop } from "@/lib/server/sops";
 import { query } from "@/lib/server/db";
+import { kick } from "@/lib/server/inline-worker";
+
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -28,5 +31,6 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     [rec.id, s.userId, rec.title],
   ))[0];
   await enqueue("sop", rec.id, { payload: { sopId: sop.id }, dedupeKey: `sop:${sop.id}:${sop.generation}` });
+  kick();
   return NextResponse.json({ sop: await sopView(sop, rec) }, { status: 202 });
 });

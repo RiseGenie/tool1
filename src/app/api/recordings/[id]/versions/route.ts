@@ -7,6 +7,9 @@ import { requireSession } from "@/lib/server/auth";
 import { getOwned, publicRecording, type Recording } from "@/lib/server/recordings";
 import { enqueue } from "@/lib/server/jobs";
 import { getStorage, keys } from "@/lib/server/storage";
+import { kick } from "@/lib/server/inline-worker";
+
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -41,5 +44,6 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
     await enqueue("process", id, { dedupeKey: `process:${id}:1`, client: c });
     return (await c.query<Recording>(`select * from recordings where id=$1`, [id])).rows[0];
   });
+  kick();
   return NextResponse.json({ recording: publicRecording(rec) }, { status: 201 });
 });

@@ -1,5 +1,37 @@
 // Server-only configuration. Credentials never reach the browser.
+import { chmodSync, copyFileSync, existsSync, mkdirSync, accessSync, constants } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+
 const isProd = process.env.NODE_ENV === "production";
+const cache = new Map<string, string | null>();
+
+/**
+ * On serverless hosts there is no ffmpeg on PATH, so the app ships static binaries (ffmpeg-static / ffprobe-static).
+ * Bundled files can lose their executable bit, so copy to the temp dir and chmod once. Returns null if the package is absent
+ * or when a system ffmpeg is preferred (not serverless).
+ */
+function bundledBinary(pkg: string, pick: (m: unknown) => string): string | null {
+  if (!process.env.VERCEL && process.env.USE_BUNDLED_FFMPEG !== "1") return null;
+  if (cache.has(pkg)) return cache.get(pkg)!;
+  let out: string | null = null;
+  try {
+    const req = createRequire(join(process.cwd(), "package.json"));
+    const src = pick(req(pkg));
+    if (src && existsSync(src)) {
+      try { accessSync(src, constants.X_OK); out = src; } catch {
+        const dir = join(tmpdir(), "rg-bin");
+        mkdirSync(dir, { recursive: true });
+        const dest = join(dir, pkg);
+        if (!existsSync(dest)) { copyFileSync(src, dest); chmodSync(dest, 0o755); }
+        out = dest;
+      }
+    }
+  } catch { out = null; }
+  cache.set(pkg, out);
+  return out;
+}
 
 function need(name: string): string {
   const v = process.env[name];
@@ -61,9 +93,9 @@ export const env = {
     return Number(process.env.MAX_UPLOAD_BYTES || 4 * 1024 ** 3);
   },
   get ffmpegPath() {
-    return process.env.FFMPEG_PATH || "ffmpeg";
+    return process.env.FFMPEG_PATH || bundledBinary("ffmpeg-static", (m) => m as unknown as string) || "ffmpeg";
   },
   get ffprobePath() {
-    return process.env.FFPROBE_PATH || "ffprobe";
+    return process.env.FFPROBE_PATH || bundledBinary("ffprobe-static", (m) => (m as { path: string }).path) || "ffprobe";
   },
 };

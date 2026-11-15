@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import { one, pool } from "./db";
 
-export type JobKind = "process" | "transcribe" | "sop";
+export type JobKind = "process" | "transcribe" | "sop" | "transcode";
 export type Job = {
   id: string;
   kind: JobKind;
@@ -30,7 +30,8 @@ export async function claim(): Promise<Job | null> {
   await pool().query(
     `update jobs set status = case when attempts >= max_attempts then 'failed' else 'queued' end,
             locked_at = null, last_error = coalesce(last_error, 'worker lost (lock expired)')
-      where status = 'running' and locked_at < now() - interval '15 minutes'`,
+      where status = 'running' and locked_at < now() - ($1 || ' minutes')::interval`,
+    [String(Number(process.env.JOB_LOCK_MINUTES || 15))],
   );
   return one<Job>(
     `update jobs set status = 'running', locked_at = now(), attempts = attempts + 1
