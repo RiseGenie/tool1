@@ -28,7 +28,11 @@ function bundledBinary(pkg: string, pick: (m: unknown) => string): string | null
         out = dest;
       }
     }
-  } catch { out = null; }
+  } catch (e) {
+    console.error(`[ffmpeg] bundled ${pkg} unavailable:`, (e as Error).message);
+    out = null;
+  }
+  if (!out) console.error(`[ffmpeg] bundled ${pkg} not found; falling back to PATH`);
   cache.set(pkg, out);
   return out;
 }
