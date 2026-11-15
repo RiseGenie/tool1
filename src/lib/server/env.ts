@@ -1,39 +1,43 @@
 // Server-only configuration. Credentials never reach the browser.
-import { chmodSync, copyFileSync, existsSync, mkdirSync, accessSync, constants } from "node:fs";
-import { createRequire } from "node:module";
+import { accessSync, chmodSync, constants, copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+// Imported normally (not via a dynamic require) so Vercel's file tracer includes the binaries in every function that can run the worker.
+import ffmpegStatic from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
 
 const isProd = process.env.NODE_ENV === "production";
 const cache = new Map<string, string | null>();
 
 /**
- * On serverless hosts there is no ffmpeg on PATH, so the app ships static binaries (ffmpeg-static / ffprobe-static).
- * Bundled files can lose their executable bit, so copy to the temp dir and chmod once. Returns null if the package is absent
- * or when a system ffmpeg is preferred (not serverless).
+ * On serverless hosts there is no ffmpeg on PATH, so the app ships static binaries. Bundled files can lose their executable
+ * bit, so copy to the temp dir and chmod once. Only used on Vercel (or with USE_BUNDLED_FFMPEG=1); elsewhere the system binaries are used.
  */
-function bundledBinary(pkg: string, pick: (m: unknown) => string): string | null {
+function bundledBinary(name: string, src: string | null | undefined): string | null {
   if (!process.env.VERCEL && process.env.USE_BUNDLED_FFMPEG !== "1") return null;
-  if (cache.has(pkg)) return cache.get(pkg)!;
+  if (cache.has(name)) return cache.get(name)!;
   let out: string | null = null;
   try {
-    const req = createRequire(join(process.cwd(), "package.json"));
-    const src = pick(req(pkg));
     if (src && existsSync(src)) {
-      try { accessSync(src, constants.X_OK); out = src; } catch {
+      try {
+        accessSync(src, constants.X_OK);
+        out = src;
+      } catch {
         const dir = join(tmpdir(), "rg-bin");
         mkdirSync(dir, { recursive: true });
-        const dest = join(dir, pkg);
-        if (!existsSync(dest)) { copyFileSync(src, dest); chmodSync(dest, 0o755); }
+        const dest = join(dir, name);
+        if (!existsSync(dest)) {
+          copyFileSync(src, dest);
+          chmodSync(dest, 0o755);
+        }
         out = dest;
       }
     }
   } catch (e) {
-    console.error(`[ffmpeg] bundled ${pkg} unavailable:`, (e as Error).message);
-    out = null;
+    console.error(`[ffmpeg] bundled ${name} unavailable:`, (e as Error).message);
   }
-  if (!out) console.error(`[ffmpeg] bundled ${pkg} not found; falling back to PATH`);
-  cache.set(pkg, out);
+  if (!out) console.error(`[ffmpeg] bundled ${name} not found (looked at ${src}); falling back to PATH`);
+  cache.set(name, out);
   return out;
 }
 
@@ -97,9 +101,9 @@ export const env = {
     return Number(process.env.MAX_UPLOAD_BYTES || 4 * 1024 ** 3);
   },
   get ffmpegPath() {
-    return process.env.FFMPEG_PATH || bundledBinary("ffmpeg-static", (m) => m as unknown as string) || "ffmpeg";
+    return process.env.FFMPEG_PATH || bundledBinary("ffmpeg", ffmpegStatic) || "ffmpeg";
   },
   get ffprobePath() {
-    return process.env.FFPROBE_PATH || bundledBinary("ffprobe-static", (m) => (m as { path: string }).path) || "ffprobe";
+    return process.env.FFPROBE_PATH || bundledBinary("ffprobe", ffprobeStatic.path) || "ffprobe";
   },
 };
